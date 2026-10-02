@@ -351,6 +351,48 @@ function Navbar() {
           <div className="max-w-[1200px] mx-auto px-4">
 
             <nav className="py-3 flex flex-col">
+              {/* Account */}
+              <a href="#"
+              onClick={closeMenu}
+              className="
+              flex
+              items-center
+              gap-3
+              py-4
+              border-b
+            border-[#e5dfcf]
+              font-medium
+            hover:text-[#b08d1f]
+              transition
+              ">
+                <User size={20}/>
+                <div>
+                    <p className="font-semibold">Account</p>
+                    <p className="text-xs text-gray-500">Sign In</p>
+                </div>
+              </a>
+
+              {/* Wish List */}
+              <a href="#"
+              onClick={closeMenu}
+              className="
+              flex
+              items-center
+              gap-3
+              py-4
+              border-b
+              border-[#e5dfcf]
+              font-medium
+              hover:text-[#b08d1f]
+              transition
+              ">
+                <Heart size={20} />
+                <div>
+                    <p className="font-semibold">Wish List</p>
+                    <p className="text-xs text-gray-500">Your Saved Products</p>
+                </div>
+              </a>
+
 
               {/* All Categories */}
               <a
