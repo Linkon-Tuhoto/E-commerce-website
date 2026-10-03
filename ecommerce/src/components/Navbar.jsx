@@ -1,17 +1,25 @@
 import { useState } from "react";
-import { Search, User, Heart, ShoppingCart, Menu, X} from "lucide-react";
+import {
+  Search,
+  User,
+  Heart,
+  ShoppingCart,
+  Menu,
+  X,
+} from "lucide-react";
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const closeMenu = () => {
     setIsMenuOpen(false);
-};
+  };
 
   return (
     <header className="w-full bg-white">
 
       {/* ================= TOP BAR ================= */}
+
       <div className="hidden sm:block bg-[#171717] text-white text-xs">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-2 flex items-center justify-between">
 
@@ -29,6 +37,7 @@ function Navbar() {
 
 
       {/* ================= MAIN NAVBAR ================= */}
+
       <div className="border-b border-gray-200">
 
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
@@ -37,12 +46,15 @@ function Navbar() {
 
 
             {/* ================= LOGO ================= */}
+
             <div className="flex items-center gap-2 shrink-0">
 
               <div className="w-9 h-9 bg-[#D4AF37] rounded-md flex items-center justify-center">
+
                 <span className="font-bold text-lg">
                   M
                 </span>
+
               </div>
 
               <span className="text-lg sm:text-xl font-bold tracking-[0.15em]">
@@ -53,6 +65,7 @@ function Navbar() {
 
 
             {/* ================= DESKTOP SEARCH ================= */}
+
             <div className="hidden md:flex flex-1">
 
               <div className="flex w-full">
@@ -84,6 +97,7 @@ function Navbar() {
                 </div>
 
                 <button
+                  type="button"
                   className="
                     h-11
                     px-7
@@ -104,11 +118,13 @@ function Navbar() {
 
 
             {/* ================= DESKTOP ACCOUNT ================= */}
+
             <div className="hidden md:flex items-center gap-2 shrink-0 cursor-pointer">
 
               <User size={21} />
 
               <div>
+
                 <p className="text-sm font-semibold">
                   Account
                 </p>
@@ -116,26 +132,32 @@ function Navbar() {
                 <p className="text-xs text-gray-500">
                   Sign in
                 </p>
+
               </div>
 
             </div>
 
 
             {/* ================= DESKTOP WISHLIST ================= */}
+
             <div className="hidden md:block shrink-0 cursor-pointer">
+
               <Heart
                 size={22}
                 className="hover:text-[#b08d1f] transition"
               />
+
             </div>
 
 
             {/* ================= DESKTOP CART ================= */}
+
             <div className="hidden md:flex items-center gap-2 shrink-0 cursor-pointer">
 
               <ShoppingCart size={22} />
 
               <div>
+
                 <p className="text-sm font-semibold">
                   Cart
                 </p>
@@ -143,18 +165,22 @@ function Navbar() {
                 <p className="text-xs text-gray-500">
                   0 items
                 </p>
+
               </div>
 
             </div>
 
 
-            {/* ================= MOBILE CART ================= */}
+            {/* ================= MOBILE CART + MENU ================= */}
+
             <div className="ml-auto md:hidden flex items-center gap-4">
 
+              {/* MOBILE CART */}
+
               <div className="relative cursor-pointer">
+
                 <ShoppingCart size={23} />
 
-                {/* Cart count */}
                 <span
                   className="
                     absolute
@@ -173,12 +199,15 @@ function Navbar() {
                 >
                   0
                 </span>
+
               </div>
 
 
-              {/* ================= MOBILE MENU BUTTON ================= */}
+              {/* MOBILE MENU BUTTON */}
+
               <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                type="button"
+                onClick={() => setIsMenuOpen(true)}
                 className="
                   w-10
                   h-10
@@ -189,14 +218,10 @@ function Navbar() {
                   hover:bg-gray-100
                   transition
                 "
-                aria-label="Toggle navigation menu"
+                aria-label="Open navigation menu"
               >
 
-                {isMenuOpen ? (
-                  <X size={25} />
-                ) : (
-                  <Menu size={25} />
-                )}
+                <Menu size={25} />
 
               </button>
 
@@ -206,6 +231,7 @@ function Navbar() {
 
 
           {/* ================= MOBILE SEARCH ================= */}
+
           <div className="md:hidden pb-4">
 
             <div className="flex w-full">
@@ -237,6 +263,7 @@ function Navbar() {
               </div>
 
               <button
+                type="button"
                 className="
                   h-10
                   px-5
@@ -270,6 +297,7 @@ function Navbar() {
           <nav className="h-12 flex items-center gap-8 text-sm">
 
             <button
+              type="button"
               className="
                 flex
                 items-center
@@ -291,12 +319,14 @@ function Navbar() {
               Clothing
             </a>
 
+
             <a
               href="#"
               className="hover:text-[#a47f12] transition"
             >
               Shoes
             </a>
+
 
             <a
               href="#"
@@ -305,12 +335,14 @@ function Navbar() {
               Kitchen
             </a>
 
+
             <a
               href="#"
               className="hover:text-[#a47f12] transition"
             >
               Household
             </a>
+
 
             <a
               href="#"
@@ -344,38 +376,113 @@ function Navbar() {
       {/* ================= MOBILE MENU ==================== */}
       {/* ================================================= */}
 
-      {isMenuOpen && (
+      {/* DARK OVERLAY */}
 
-        <div className="md:hidden bg-[#f5f1e6] border-b border-[#e5dfcf]">
+      <div
+        className={`
+          fixed
+          inset-0
+          z-40
+          bg-black/40
+          md:hidden
+          transition-opacity
+          duration-300
+          ${
+            isMenuOpen
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
+          }
+        `}
+        onClick={closeMenu}
+      />
 
-          <div className="max-w-[1200px] mx-auto px-4">
 
-            <nav className="py-3 flex flex-col">
-              {/* Account */}
-              <a href="#"
+      {/* RIGHT SIDE DRAWER */}
+
+      <aside
+        className={`
+          fixed
+          top-0
+          right-0
+          bottom-0
+          z-50
+          w-[86%]
+          max-w-[390px]
+          bg-[#f5f1e6]
+          shadow-2xl
+          md:hidden
+          overflow-y-auto
+          transition-transform
+          duration-300
+          ease-out
+          ${
+            isMenuOpen
+              ? "translate-x-0"
+              : "translate-x-full"
+          }
+        `}
+      >
+
+        {/* ================= DRAWER HEADER ================= */}
+
+        <div className="bg-white border-b border-[#e5dfcf]">
+
+          <div className="px-4 py-4 flex items-center justify-between">
+
+            {/* LOGO */}
+
+            <div className="flex items-center gap-2">
+
+              <div className="w-9 h-9  rounded-md flex items-center justify-center">
+
+                <span className="font-bold text-lg">
+                  
+                </span>
+
+              </div>
+
+              <span className="text-lg font-bold tracking-[0.15em]">
+                
+              </span>
+
+            </div>
+
+
+            {/* CLOSE BUTTON */}
+
+            <button
+              type="button"
               onClick={closeMenu}
               className="
-              flex
-              items-center
-              gap-3
-              py-4
-              border-b
-            border-[#e5dfcf]
-              font-medium
-            hover:text-[#b08d1f]
-              transition
-              ">
-                <User size={20}/>
-                <div>
-                    <p className="font-semibold">Account</p>
-                    <p className="text-xs text-gray-500">Sign In</p>
-                </div>
-              </a>
+                w-10
+                h-10
+                flex
+                items-center
+                justify-center
+                rounded-md
+                hover:bg-gray-100
+                transition
+              "
+              aria-label="Close navigation menu"
+            >
+              <X size={25} />
+            </button>
 
-              {/* Wish List */}
-              <a href="#"
-              onClick={closeMenu}
-              className="
+          </div>
+
+        </div>
+
+
+        {/* ================= MENU LINKS ================= */}
+
+        <nav className="px-4 py-3 flex flex-col">
+
+          {/* ACCOUNT */}
+
+          <a
+            href="#"
+            onClick={closeMenu}
+            className="
               flex
               items-center
               gap-3
@@ -385,141 +492,194 @@ function Navbar() {
               font-medium
               hover:text-[#b08d1f]
               transition
-              ">
-                <Heart size={20} />
-                <div>
-                    <p className="font-semibold">Wish List</p>
-                    <p className="text-xs text-gray-500">Your Saved Products</p>
-                </div>
-              </a>
+            "
+          >
+
+            <User size={20} />
+
+            <div>
+
+              <p className="font-semibold">
+                Account
+              </p>
+
+              <p className="text-xs text-gray-500">
+                Sign In
+              </p>
+
+            </div>
+
+          </a>
 
 
-              {/* All Categories */}
-              <a
-                href="#"
-                onClick={closeMenu}
-                className="
-                  flex
-                  items-center
-                  gap-3
-                  py-3
-                  font-semibold
-                  border-b
-                  border-[#e5dfcf]
-                  hover:text-[#a47f12]
-                  transition
-                "
-              >
-                <Menu size={18} />
-                All Categories
-              </a>
+          {/* WISH LIST */}
+
+          <a
+            href="#"
+            onClick={closeMenu}
+            className="
+              flex
+              items-center
+              gap-3
+              py-4
+              border-b
+              border-[#e5dfcf]
+              font-medium
+              hover:text-[#b08d1f]
+              transition
+            "
+          >
+
+            <Heart size={20} />
+
+            <div>
+
+              <p className="font-semibold">
+                Wish List
+              </p>
+
+              <p className="text-xs text-gray-500">
+                Your Saved Products
+              </p>
+
+            </div>
+
+          </a>
 
 
-              {/* Clothing */}
-              <a
-                href="#"
-                onClick={closeMenu}
-                className="
-                  py-3
-                  border-b
-                  border-[#e5dfcf]
-                  hover:text-[#a47f12]
-                  transition
-                "
-              >
-                Clothing
-              </a>
+          {/* ALL CATEGORIES */}
+
+          <a
+            href="/shop"
+            onClick={closeMenu}
+            className="
+              flex
+              items-center
+              gap-3
+              py-4
+              font-semibold
+              border-b
+              border-[#e5dfcf]
+              hover:text-[#a47f12]
+              transition
+            "
+          >
+
+            <Menu size={18} />
+
+            All Categories
+
+          </a>
 
 
-              {/* Shoes */}
-              <a
-                href="#"
-                onClick={closeMenu}
-                className="
-                  py-3
-                  border-b
-                  border-[#e5dfcf]
-                  hover:text-[#a47f12]
-                  transition
-                "
-              >
-                Shoes
-              </a>
+          {/* CLOTHING */}
+
+          <a
+            href="/shop?category=Clothing"
+            onClick={closeMenu}
+            className="
+              py-3
+              border-b
+              border-[#e5dfcf]
+              hover:text-[#a47f12]
+              transition
+            "
+          >
+            Clothing
+          </a>
 
 
-              {/* Kitchen */}
-              <a
-                href="#"
-                onClick={closeMenu}
-                className="
-                  py-3
-                  border-b
-                  border-[#e5dfcf]
-                  hover:text-[#a47f12]
-                  transition
-                "
-              >
-                Kitchen
-              </a>
+          {/* SHOES */}
+
+          <a
+            href="/shop?category=Shoes"
+            onClick={closeMenu}
+            className="
+              py-3
+              border-b
+              border-[#e5dfcf]
+              hover:text-[#a47f12]
+              transition
+            "
+          >
+            Shoes
+          </a>
 
 
-              {/* Household */}
-              <a
-                href="#"
-                onClick={closeMenu}
-                className="
-                  py-3
-                  border-b
-                  border-[#e5dfcf]
-                  hover:text-[#a47f12]
-                  transition
-                "
-              >
-                Household
-              </a>
+          {/* KITCHEN */}
+
+          <a
+            href="/shop?category=Kitchen"
+            onClick={closeMenu}
+            className="
+              py-3
+              border-b
+              border-[#e5dfcf]
+              hover:text-[#a47f12]
+              transition
+            "
+          >
+            Kitchen
+          </a>
 
 
-              {/* New Arrivals */}
-              <a
-                href="#"
-                onClick={closeMenu}
-                className="
-                  py-3
-                  border-b
-                  border-[#e5dfcf]
-                  hover:text-[#a47f12]
-                  transition
-                "
-              >
-                New Arrivals
-              </a>
+          {/* HOUSEHOLD */}
+
+          <a
+            href="/shop?category=Household"
+            onClick={closeMenu}
+            className="
+              py-3
+              border-b
+              border-[#e5dfcf]
+              hover:text-[#a47f12]
+              transition
+            "
+          >
+            Household
+          </a>
 
 
-              {/* Today's Deals */}
-              <a
-                href="#"
-                onClick={closeMenu}
-                className="
-                  py-3
-                  text-[#a47f12]
-                  font-semibold
-                  hover:text-[#80620b]
-                  transition
-                "
-              >
-                Today's Deals
-              </a>
+          {/* NEW ARRIVALS */}
 
-            </nav>
-
-          </div>
-
-        </div>
-
-      )}
+          <a
+            href="#"
+            onClick={closeMenu}
+            className="
+              py-3
+              border-b
+              border-[#e5dfcf]
+              hover:text-[#a47f12]
+              transition
+            "
+          >
+            New Arrivals
+          </a>
 
 
-      {/* ================= FINAL SEPARATOR ================= */}
+          {/* TODAY'S DEALS */}
+
+          <a
+            href="#"
+            onClick={closeMenu}
+            className="
+              py-3
+              text-[#a47f12]
+              font-semibold
+              hover:text-[#80620b]
+              transition
+            "
+          >
+            Today's Deals
+          </a>
+
+        </nav>
+
+      </aside>
+
+
+      {/* FINAL SEPARATOR */}
+
       <div className="border-b border-gray-300" />
 
     </header>
