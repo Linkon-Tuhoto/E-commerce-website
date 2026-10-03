@@ -9,7 +9,6 @@ function Home() {
       <Navbar />
       <Hero />
       <Categories />
-      <Shop />
     </>
   )
 }

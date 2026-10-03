@@ -4,6 +4,8 @@ import clothingImage from "../assets/clothing.png";
 import shoesImage from "../assets/shoesImage.png";
 import kitchenImage from "../assets/kitchen.png";
 import householdImage from "../assets/household.png";
+import { Link } from "react-router-dom";
+import Shop from "./Shop";
 
 function Categories() {
   const categories = [
@@ -46,10 +48,10 @@ function Categories() {
             </h2>
           </div>
 
-          <button className="hidden sm:flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-[#b08d1f]">
+          <Link to="/shop" className="hidden sm:flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-[#b08d1f]">
             View all
             <ArrowRight size={16} />
-          </button>
+          </Link>
 
         </div>
 
