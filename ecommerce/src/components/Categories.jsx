@@ -1,11 +1,10 @@
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import clothingImage from "../assets/clothing.png";
 import shoesImage from "../assets/shoesImage.png";
 import kitchenImage from "../assets/kitchen.png";
 import householdImage from "../assets/household.png";
-import { Link } from "react-router-dom";
-import Shop from "./Shop";
 
 function Categories() {
   const categories = [
@@ -33,126 +32,67 @@ function Categories() {
 
   return (
     <section className="w-full bg-white">
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-14 sm:py-16">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-14">
 
-        {/* HEADER */}
-        <div className="flex items-end justify-between mb-7">
-
+        <div className="flex justify-between items-end mb-7">
           <div>
-            <p className="text-[10px] sm:text-xs font-semibold tracking-[0.15em] text-[#b08d1f] uppercase">
+            <p className="text-xs font-semibold tracking-widest text-[#b08d1f] uppercase">
               Shop your way
             </p>
 
-            <h2 className="mt-2 text-2xl sm:text-3xl font-medium tracking-[-0.03em] text-[#171717]">
+            <h2 className="mt-2 text-2xl sm:text-3xl font-medium">
               Browse categories
             </h2>
           </div>
 
-          <Link to="/shop" className="hidden sm:flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-[#b08d1f]">
+          <Link
+            to="/shop"
+            className="hidden sm:flex items-center gap-1 text-sm"
+          >
             View all
             <ArrowRight size={16} />
           </Link>
-
         </div>
 
-
-        {/* CATEGORY CARDS */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 
           {categories.map((category) => (
-            <div
+            <Link
               key={category.name}
-              className="
-                group
-                relative
-                overflow-hidden
-                rounded-xl
-                h-[250px]
-                sm:h-[300px]
-                lg:h-[340px]
-                cursor-pointer
-              "
+              to={`/shop?category=${category.name}`}
+              className="group relative overflow-hidden rounded-xl h-[250px] sm:h-[300px]"
             >
-
-              {/* IMAGE */}
               <img
                 src={category.image}
                 alt={category.name}
-                className="
-                  absolute
-                  inset-0
-                  w-full
-                  h-full
-                  object-cover
-                  transition-transform
-                  duration-500
-                  group-hover:scale-105
-                "
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500"
               />
 
-              {/* DARK OVERLAY */}
-              <div
-                className="
-                  absolute
-                  inset-0
-                  bg-gradient-to-t
-                  from-black/75
-                  via-black/15
-                  to-transparent
-                "
-              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent" />
 
-              {/* TEXT */}
               <div className="absolute bottom-4 left-4 right-4 text-white">
-
-                <div className="flex items-end justify-between gap-2">
+                <div className="flex items-end justify-between">
 
                   <div>
                     <h3 className="text-lg sm:text-xl font-semibold">
                       {category.name}
                     </h3>
 
-                    <p className="mt-1 text-[10px] sm:text-xs tracking-[0.08em] text-white/80">
+                    <p className="text-xs text-white/80 mt-1">
                       {category.description}
                     </p>
                   </div>
 
-                  {/* ARROW */}
-                  <div
-                    className="
-                      shrink-0
-                      w-9
-                      h-9
-                      rounded-full
-                      bg-white
-                      text-black
-                      flex
-                      items-center
-                      justify-center
-                      transition-transform
-                      duration-300
-                      group-hover:translate-x-1
-                    "
-                  >
+                  <div className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center">
                     <ArrowRight size={17} />
                   </div>
 
                 </div>
-
               </div>
-
-            </div>
+            </Link>
           ))}
 
         </div>
-
-
-        {/* MOBILE VIEW ALL */}
-        <button className="sm:hidden mt-5 flex items-center gap-1 text-sm font-medium text-gray-700">
-          View all
-          <ArrowRight size={16} />
-        </button>
-
       </div>
     </section>
   );

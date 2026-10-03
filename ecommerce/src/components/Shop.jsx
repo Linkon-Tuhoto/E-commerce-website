@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+
 import {
   Heart,
   ShoppingCart,
@@ -10,144 +12,7 @@ import {
   Minus,
 } from "lucide-react";
 
-// =========================
-// PRODUCT IMAGES
-// =========================
-// Change these paths to your actual images
-import shirt from "../assets/shirt.png";
-import shoes from "../assets/shoesImage.png";
-import kitchen from "../assets/kitchen.png";
-import dress from "../assets/dress.png";
-import sneakers from "../assets/sneakers.png";
-import bowl from "../assets/bowl.png";
-import basket from "../assets/basket.png";
-import cushions from "../assets/cushion.png";
-import watch from "../assets/watch.png";
-import bag from "../assets/bag.png";
-
-const products = [
-  {
-    id: 1,
-    image: shirt,
-    category: "CLOTHING",
-    name: "Essential Linen Shirt",
-    rating: "4.8",
-    reviews: 42,
-    price: 1890,
-    oldPrice: 2400,
-    sizes: ["S", "M", "L", "XL"],
-    badge: "-21%",
-  },
-  {
-    id: 2,
-    image: shoes,
-    category: "SHOES",
-    name: "Cloud Runner Sneakers",
-    rating: "4.9",
-    reviews: 42,
-    price: 3290,
-    oldPrice: 4100,
-    sizes: ["39", "40", "41", "42"],
-    badge: "Bestseller",
-  },
-  {
-    id: 3,
-    image: kitchen,
-    category: "KITCHEN",
-    name: "Non-Stick Cookware Set",
-    rating: "4.7",
-    reviews: 42,
-    price: 4950,
-    oldPrice: 5900,
-    sizes: [],
-    badge: "-16%",
-  },
-  {
-    id: 4,
-    image: dress,
-    category: "CLOTHING",
-    name: "Soft Knit Midi Dress",
-    rating: "4.6",
-    reviews: 42,
-    price: 2750,
-    oldPrice: null,
-    sizes: ["S", "M", "L"],
-    badge: "New",
-  },
-  {
-    id: 5,
-    image: sneakers,
-    category: "SHOES",
-    name: "Everyday White Trainers",
-    rating: "4.8",
-    reviews: 42,
-    price: 3600,
-    oldPrice: 4200,
-    sizes: ["38", "39", "40", "41"],
-    badge: "-14%",
-  },
-  {
-    id: 6,
-    image: bowl,
-    category: "KITCHEN",
-    name: "Artisan Serving Bowl",
-    rating: "4.5",
-    reviews: 42,
-    price: 1450,
-    oldPrice: null,
-    sizes: [],
-    badge: "New",
-  },
-  {
-    id: 7,
-    image: basket,
-    category: "HOUSEHOLD",
-    name: "Woven Storage Basket",
-    rating: "4.7",
-    reviews: 42,
-    price: 2100,
-    oldPrice: 2600,
-    sizes: [],
-    badge: null,
-  },
-  {
-    id: 8,
-    image: cushions,
-    category: "HOUSEHOLD",
-    name: "Cotton Cushion Pair",
-    rating: "4.6",
-    reviews: 42,
-    price: 1750,
-    oldPrice: null,
-    sizes: [],
-    badge: null,
-  },
-  {
-    id: 9,
-    image: watch,
-    category: "ACCESSORIES",
-    name: "Classic Leather Watch",
-    rating: "4.7",
-    reviews: 31,
-    price: 2800,
-    oldPrice: 3500,
-    sizes: [],
-    badge: "-20%",
-  },
-  {
-    id: 10,
-    image: bag,
-    category: "ACCESSORIES",
-    name: "Everyday Leather Bag",
-    rating: "4.8",
-    reviews: 28,
-    price: 3200,
-    oldPrice: null,
-    sizes: [],
-    badge: "New",
-  },
-];
-
+import { products } from "../data/products";
 
 // =========================
 // FILTER COMPONENT
@@ -159,6 +24,7 @@ function Filters() {
 
       {/* CATEGORY */}
       <div className="border-b border-gray-200 pb-5">
+
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Category</h3>
           <Minus size={16} />
@@ -171,28 +37,36 @@ function Filters() {
             ["Shoes", 2],
             ["Kitchen", 2],
             ["Household", 2],
+            ["Accessories", 2],
           ].map(([name, count]) => (
+
             <label
               key={name}
               className="flex items-center justify-between text-sm cursor-pointer"
             >
+
               <span className="flex items-center gap-2">
+
                 <input
                   type="checkbox"
                   className="accent-[#D4AF37]"
                 />
+
                 {name}
+
               </span>
 
               <span className="text-xs text-gray-400">
                 {count}
               </span>
+
             </label>
+
           ))}
 
         </div>
-      </div>
 
+      </div>
 
       {/* OTHER FILTERS */}
 
@@ -204,8 +78,10 @@ function Filters() {
         "Rating",
         "Discount",
       ].map((filter) => (
+
         <button
           key={filter}
+          type="button"
           className="
             w-full
             py-4
@@ -218,15 +94,18 @@ function Filters() {
             font-semibold
           "
         >
+
           {filter}
+
           <Plus size={17} />
+
         </button>
+
       ))}
 
     </div>
   );
 }
-
 
 // =========================
 // PRODUCT CARD
@@ -248,137 +127,169 @@ function ProductCard({ product }) {
     >
 
       {/* IMAGE */}
-      <div className="relative aspect-square bg-gray-100 overflow-hidden">
 
-        <img
-          src={product.image}
-          alt={product.name}
-          className="
-            w-full
-            h-full
-            object-cover
-            group-hover:scale-105
-            transition
-            duration-500
-          "
-        />
+      <Link
+        to={`/product/${product.id}`}
+        className="block"
+      >
 
-        {/* BADGE */}
-        {product.badge && (
-          <span
+        <div className="relative aspect-square bg-gray-100 overflow-hidden">
+
+          <img
+            src={product.images[0]}
+            alt={product.name}
             className="
-              absolute
-              top-3
-              left-3
-              bg-[#D4AF37]
-              text-black
-              text-[11px]
-              font-semibold
-              px-2.5
-              py-1
-              rounded-md
+              w-full
+              h-full
+              object-cover
+              group-hover:scale-105
+              transition
+              duration-500
             "
-          >
-            {product.badge}
-          </span>
-        )}
+          />
 
-        {/* WISHLIST */}
-        <button
-          className="
-            absolute
-            top-3
-            right-3
-            w-9
-            h-9
-            rounded-full
-            bg-white
-            flex
-            items-center
-            justify-center
-            shadow-sm
-            hover:bg-gray-50
-          "
-        >
-          <Heart size={18} />
-        </button>
+          {/* BADGE */}
 
-      </div>
-
-
-      {/* DETAILS */}
-      <div className="p-4">
-
-        <p className="text-[10px] tracking-wider text-gray-500 font-semibold mb-1">
-          {product.category}
-        </p>
-
-        <h3 className="font-semibold text-sm mb-2">
-          {product.name}
-        </h3>
-
-
-        {/* RATING */}
-        <div className="flex items-center gap-1 text-xs mb-3">
-
-          <span className="text-[#b08d1f]">
-            ★
-          </span>
-
-          <span>
-            {product.rating}
-          </span>
-
-          <span className="text-gray-400">
-            ({product.reviews})
-          </span>
-
-        </div>
-
-
-        {/* SIZES */}
-        {product.sizes.length > 0 && (
-          <div className="flex gap-1.5 mb-3">
-
-            {product.sizes.map((size) => (
-              <span
-                key={size}
-                className="
-                  text-[10px]
-                  border
-                  border-gray-200
-                  rounded
-                  px-2
-                  py-1
-                  text-gray-500
-                "
-              >
-                {size}
-              </span>
-            ))}
-
-          </div>
-        )}
-
-
-        {/* PRICE */}
-        <div className="flex items-center gap-2 mb-3">
-
-          <span className="text-[#b08d1f] font-bold">
-            KSh {product.price.toLocaleString()}
-          </span>
-
-          {product.oldPrice && (
-            <span className="text-xs text-gray-400 line-through">
-              KSh {product.oldPrice.toLocaleString()}
+          {product.badge && (
+            <span
+              className="
+                absolute
+                top-3
+                left-3
+                bg-[#D4AF37]
+                text-black
+                text-[11px]
+                font-semibold
+                px-2.5
+                py-1
+                rounded-md
+              "
+            >
+              {product.badge}
             </span>
           )}
 
+          {/* WISHLIST */}
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+            }}
+            className="
+              absolute
+              top-3
+              right-3
+              w-9
+              h-9
+              rounded-full
+              bg-white
+              flex
+              items-center
+              justify-center
+              shadow-sm
+              hover:bg-gray-50
+            "
+          >
+            <Heart size={18} />
+          </button>
+
         </div>
 
+      </Link>
+
+      {/* DETAILS */}
+
+      <div className="p-4">
+
+        {/* CATEGORY */}
+
+        <Link
+          to={`/product/${product.id}`}
+          className="block"
+        >
+
+          <p className="text-[10px] tracking-wider text-gray-500 font-semibold mb-1">
+            {product.category}
+          </p>
+
+          {/* NAME */}
+
+          <h3 className="font-semibold text-sm mb-2">
+            {product.name}
+          </h3>
+
+          {/* RATING */}
+
+          <div className="flex items-center gap-1 text-xs mb-3">
+
+            <span className="text-[#b08d1f]">
+              ★
+            </span>
+
+            <span>
+              {product.rating}
+            </span>
+
+            <span className="text-gray-400">
+              ({product.reviews})
+            </span>
+
+          </div>
+
+          {/* SIZES */}
+
+          {product.sizes.length > 0 && (
+
+            <div className="flex gap-1.5 mb-3">
+
+              {product.sizes.map((size) => (
+
+                <span
+                  key={size}
+                  className="
+                    text-[10px]
+                    border
+                    border-gray-200
+                    rounded
+                    px-2
+                    py-1
+                    text-gray-500
+                  "
+                >
+                  {size}
+                </span>
+
+              ))}
+
+            </div>
+
+          )}
+
+          {/* PRICE */}
+
+          <div className="flex items-center gap-2 mb-3">
+
+            <span className="text-[#b08d1f] font-bold">
+              KSh {product.price.toLocaleString()}
+            </span>
+
+            {product.oldPrice && (
+
+              <span className="text-xs text-gray-400 line-through">
+                KSh {product.oldPrice.toLocaleString()}
+              </span>
+
+            )}
+
+          </div>
+
+        </Link>
 
         {/* CART BUTTON */}
+
         <button
+          type="button"
           className="
             w-full
             h-10
@@ -394,8 +305,11 @@ function ProductCard({ product }) {
             transition
           "
         >
+
           <ShoppingCart size={16} />
+
           Add to cart
+
         </button>
 
       </div>
@@ -404,7 +318,6 @@ function ProductCard({ product }) {
   );
 }
 
-
 // =========================
 // SHOP PAGE
 // =========================
@@ -412,6 +325,7 @@ function ProductCard({ product }) {
 function Shop() {
 
   const [currentPage, setCurrentPage] = useState(1);
+
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const productsPerPage = 8;
@@ -429,18 +343,23 @@ function Shop() {
       startIndex + productsPerPage
     );
 
-
   const changePage = (page) => {
+
+    if (page < 1 || page > totalPages) {
+      return;
+    }
+
     setCurrentPage(page);
 
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
+
   };
 
-
   return (
+
     <main className="bg-white min-h-screen">
 
       {/* ================= PAGE HEADER ================= */}
@@ -454,6 +373,7 @@ function Shop() {
         <div className="flex items-end justify-between gap-4">
 
           <div>
+
             <h1 className="text-3xl sm:text-4xl font-semibold">
               All products
             </h1>
@@ -461,10 +381,11 @@ function Shop() {
             <p className="text-gray-500 text-sm mt-2">
               Browse our carefully selected products
             </p>
+
           </div>
 
-
           {/* SORT */}
+
           <select
             className="
               hidden
@@ -478,20 +399,22 @@ function Shop() {
               outline-none
             "
           >
+
             <option>Recommended</option>
             <option>Newest</option>
             <option>Price: Low to high</option>
             <option>Price: High to low</option>
+
           </select>
 
         </div>
-
 
         {/* MOBILE CONTROLS */}
 
         <div className="flex sm:hidden gap-3 mt-6">
 
           <button
+            type="button"
             onClick={() => setIsFilterOpen(true)}
             className="
               flex-1
@@ -507,10 +430,12 @@ function Shop() {
               font-medium
             "
           >
-            <SlidersHorizontal size={17} />
-            Filters
-          </button>
 
+            <SlidersHorizontal size={17} />
+
+            Filters
+
+          </button>
 
           <select
             className="
@@ -524,16 +449,17 @@ function Shop() {
               outline-none
             "
           >
+
             <option>Recommended</option>
             <option>Newest</option>
             <option>Price: Low to high</option>
             <option>Price: High to low</option>
+
           </select>
 
         </div>
 
       </section>
-
 
       {/* ================= PRODUCTS AREA ================= */}
 
@@ -544,9 +470,10 @@ function Shop() {
           {/* DESKTOP FILTER SIDEBAR */}
 
           <aside className="hidden lg:block w-[195px] shrink-0">
-            <Filters />
-          </aside>
 
+            <Filters />
+
+          </aside>
 
           {/* PRODUCTS */}
 
@@ -563,14 +490,15 @@ function Shop() {
             >
 
               {currentProducts.map((product) => (
+
                 <ProductCard
                   key={product.id}
                   product={product}
                 />
+
               ))}
 
             </div>
-
 
             {/* ================= PAGINATION ================= */}
 
@@ -581,6 +509,7 @@ function Shop() {
                 {/* PREVIOUS */}
 
                 <button
+                  type="button"
                   disabled={currentPage === 1}
                   onClick={() =>
                     changePage(currentPage - 1)
@@ -596,10 +525,12 @@ function Shop() {
                     disabled:opacity-30
                   "
                 >
-                  <ChevronLeft size={16} />
-                  Previous
-                </button>
 
+                  <ChevronLeft size={16} />
+
+                  Previous
+
+                </button>
 
                 {/* PAGE NUMBERS */}
 
@@ -609,6 +540,7 @@ function Shop() {
                 ).map((page) => (
 
                   <button
+                    type="button"
                     key={page}
                     onClick={() => changePage(page)}
                     className={`
@@ -626,15 +558,17 @@ function Shop() {
                       }
                     `}
                   >
+
                     {page}
+
                   </button>
 
                 ))}
 
-
                 {/* NEXT */}
 
                 <button
+                  type="button"
                   disabled={currentPage === totalPages}
                   onClick={() =>
                     changePage(currentPage + 1)
@@ -649,12 +583,14 @@ function Shop() {
                     disabled:opacity-30
                   "
                 >
+
                   Next
+
                   <ChevronRight size={16} />
+
                 </button>
 
               </div>
-
 
               {/* DOTS */}
 
@@ -665,10 +601,12 @@ function Shop() {
                   (_, index) => (
 
                     <button
+                      type="button"
                       key={index}
                       onClick={() =>
                         changePage(index + 1)
                       }
+                      aria-label={`Go to page ${index + 1}`}
                       className={`
                         rounded-full
                         transition-all
@@ -686,7 +624,6 @@ function Shop() {
 
               </div>
 
-
               <p className="text-xs text-gray-400 mt-4">
                 Page {currentPage} of {totalPages}
               </p>
@@ -698,7 +635,6 @@ function Shop() {
         </div>
 
       </section>
-
 
       {/* ================= MOBILE FILTER DRAWER ================= */}
 
@@ -716,7 +652,6 @@ function Shop() {
               bg-black/40
             "
           />
-
 
           {/* PANEL */}
 
@@ -755,6 +690,7 @@ function Shop() {
               </h2>
 
               <button
+                type="button"
                 onClick={() => setIsFilterOpen(false)}
               >
                 <X size={21} />
@@ -762,12 +698,12 @@ function Shop() {
 
             </div>
 
-
             <div className="p-5">
 
               <Filters />
 
               <button
+                type="button"
                 onClick={() => setIsFilterOpen(false)}
                 className="
                   w-full
@@ -792,6 +728,7 @@ function Shop() {
       )}
 
     </main>
+
   );
 }
 
