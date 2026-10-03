@@ -1,16 +1,22 @@
-import { useState } from 'react'
-import Navbar from './components/Navbar'
-import Hero from './components/Hero'
-import Categories from './components/Categories'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+
+import Home from './pages/Home'
 import Shop from './components/Shop'
+import ProductDetails from './pages/ProductDetails'
+
 function App() {
   return (
-    <>
-    <Navbar />
-    <Hero />
-    <Categories />
-    <Shop />
-    </>
+    <BrowserRouter>
+      <Routes>
+
+        <Route path="/" element={<Home />} />
+
+        <Route path="/shop" element={<Shop />} />
+
+        <Route path="/product/:id" element={<ProductDetails />} />
+
+      </Routes>
+    </BrowserRouter>
   )
 }
 
