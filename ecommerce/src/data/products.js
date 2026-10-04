@@ -18,6 +18,7 @@ export const products = [
     discount: 21,
     rating: 4.8,
     reviews: 48,
+    featured: true,
 
     description:
       "A comfortable and stylish linen shirt designed for everyday wear.",
@@ -50,6 +51,7 @@ export const products = [
     discount: 21,
     rating: 4.9,
     reviews: 42,
+    featured: true,
 
     description:
       "Lightweight everyday sneakers designed for comfort and movement.",
@@ -82,6 +84,7 @@ export const products = [
     discount: 16,
     rating: 4.7,
     reviews: 42,
+    featured: true,
 
     description:
       "A practical cookware set designed for everyday cooking.",
@@ -114,6 +117,7 @@ export const products = [
     discount: null,
     rating: 4.6,
     reviews: 32,
+    featured: true,
 
     description:
       "A comfortable midi dress with a soft finish and versatile everyday style.",
@@ -146,6 +150,7 @@ export const products = [
     discount: 14,
     rating: 4.8,
     reviews: 38,
+    featured: true,
 
     description:
       "Clean and comfortable trainers suitable for everyday outfits.",
@@ -178,6 +183,7 @@ export const products = [
     discount: null,
     rating: 4.5,
     reviews: 21,
+    featured: true,
 
     description:
       "A stylish serving bowl designed for everyday dining and entertaining.",
@@ -206,6 +212,7 @@ export const products = [
     discount: 19,
     rating: 4.7,
     reviews: 27,
+    featured: true,
 
     description:
       "A practical woven basket for keeping your home organised.",
@@ -234,6 +241,7 @@ export const products = [
     discount: null,
     rating: 4.6,
     reviews: 19,
+    featured: true,
 
     description:
       "Soft cotton cushions that add comfort and style to your living space.",
