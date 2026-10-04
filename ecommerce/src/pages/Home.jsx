@@ -4,6 +4,7 @@ import Categories from '../components/Categories'
 import Benefits from '../components/Benefits'
 import FeaturedProducts from '../components/FeaturedProducts'
 import PromoBanner from '../components/PromoBanner'
+import NewArrivals from '../components/NewArrivals'
 
 function Home() {
   return (
@@ -13,6 +14,7 @@ function Home() {
       <Benefits />
       <FeaturedProducts />
       <PromoBanner />
+      <NewArrivals />
     </>
   )
 }
