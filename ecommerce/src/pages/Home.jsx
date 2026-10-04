@@ -1,7 +1,7 @@
 import Navbar from '../components/Navbar'
 import Hero from '../components/Hero'
 import Categories from '../components/Categories'
-import Shop from '../components/Shop'
+import Benefits from '../components/Benefits'
 
 function Home() {
   return (
@@ -9,6 +9,7 @@ function Home() {
       <Navbar />
       <Hero />
       <Categories />
+      <Benefits />
     </>
   )
 }
