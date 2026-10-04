@@ -3,15 +3,16 @@ import Hero from '../components/Hero'
 import Categories from '../components/Categories'
 import Benefits from '../components/Benefits'
 import FeaturedProducts from '../components/FeaturedProducts'
+import PromoBanner from '../components/PromoBanner'
 
 function Home() {
   return (
     <>
-      <Navbar />
       <Hero />
       <Categories />
       <Benefits />
       <FeaturedProducts />
+      <PromoBanner />
     </>
   )
 }

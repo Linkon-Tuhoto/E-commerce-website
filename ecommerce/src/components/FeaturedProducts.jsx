@@ -28,8 +28,7 @@ function FeaturedProducts() {
           <Link
             to="/shop"
             className="
-              hidden
-              sm:flex
+              flex
               items-center
               gap-1
               text-sm

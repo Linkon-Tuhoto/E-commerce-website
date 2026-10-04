@@ -16,7 +16,7 @@ function Navbar() {
   };
 
   return (
-    <header className="w-full bg-white">
+    <header className="w-full bg-white fixed top-0 left-0 z-50 shadow-sm">
 
       {/* ================= TOP BAR ================= */}
 
