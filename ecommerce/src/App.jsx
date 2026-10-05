@@ -9,6 +9,7 @@ import Footer from './components/Footer'
 import Cart from './pages/Cart'
 import Wishlist from './pages/Wishlist'
 import SignIn from './pages/SignIn'
+import AdminProducts from './pages/admin/AdminProducts'
 
 function App() {
   const [cart, setCart] = useState([]);
@@ -27,6 +28,8 @@ function App() {
         <Route path="/wishlist" element={<Wishlist setCart={setCart} wishlist={wishlist} setWishlist={setWishlist} />} />
         <Route path="/signin" element={<SignIn />} />
 
+        //Admin
+        <Route path="/admin/products" element={<AdminProducts />} />
       </Routes>
       <Footer />
     </BrowserRouter>
