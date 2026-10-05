@@ -7,6 +7,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -295,6 +296,9 @@ function Navbar() {
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
 
           <nav className="h-12 flex items-center gap-8 text-sm">
+            <Link to="/" className="hover:text-[#a47f12] transition">
+            Home
+            </Link>
 
             <button
               type="button"
@@ -545,6 +549,10 @@ function Navbar() {
             </div>
 
           </a>
+
+          <Link to="/" onClick={closeMenu} className="gap-3 py-4 border-b border-[#e5dfcf] hover:text-[#a47f12] transition">
+          Home
+          </Link>
 
 
           {/* ALL CATEGORIES */}
