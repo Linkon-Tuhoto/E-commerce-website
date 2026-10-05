@@ -1,1 +1,14 @@
 @import "tailwindcss";
+@layer components {
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1.5;
+  }
+
+  .input {
+    @apply w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm outline-none transition;
+  }
+
+  .input:focus {
+    @apply border-[#D4AF37] ring-1 ring-[#D4AF37];
+  }
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Plus,
   Pencil,
@@ -129,7 +130,7 @@ function AdminProducts() {
             </p>
           </div>
 
-          <button
+          <Link to="/admin/products/new"
             className="
               flex items-center justify-center gap-2
               bg-[#D4AF37]
@@ -145,7 +146,7 @@ function AdminProducts() {
           >
             <Plus size={18} />
             Add Product
-          </button>
+          </Link>
 
         </div>
 
