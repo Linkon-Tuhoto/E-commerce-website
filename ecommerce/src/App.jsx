@@ -7,9 +7,11 @@ import ProductDetails from './pages/ProductDetails'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Cart from './pages/Cart'
+import Wishlist from './pages/Wishlist'
 
 function App() {
   const [cart, setCart] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
   return (
     <BrowserRouter>
     <Navbar cart={cart}/>
@@ -21,6 +23,7 @@ function App() {
 
         <Route path="/product/:id" element={<ProductDetails cart={cart} setCart={setCart} />} />
         <Route path="/cart" element={<Cart cart={cart} setCart={setCart} />} />
+        <Route path="/wishlist" element={<Wishlist setCart={setCart} wishlist={wishlist} setWishlist={setWishlist} />} />
 
       </Routes>
       <Footer />

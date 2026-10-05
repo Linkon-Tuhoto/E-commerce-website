@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Cart from "../pages/Cart";
+import Wishlist from "../pages/Wishlist";
 
 function Navbar({ cart }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -142,14 +143,14 @@ function Navbar({ cart }) {
 
             {/* ================= DESKTOP WISHLIST ================= */}
 
-            <div className="hidden md:block shrink-0 cursor-pointer">
+            <Link to="wishlist" className="hidden md:block shrink-0 cursor-pointer">
 
               <Heart
                 size={22}
                 className="hover:text-[#b08d1f] transition"
               />
 
-            </div>
+            </Link>
 
 
             {/* ================= DESKTOP CART ================= */}
@@ -519,8 +520,8 @@ function Navbar({ cart }) {
 
           {/* WISH LIST */}
 
-          <a
-            href="#"
+          <Link
+            to="/wishlist"
             onClick={closeMenu}
             className="
               flex
@@ -549,7 +550,7 @@ function Navbar({ cart }) {
 
             </div>
 
-          </a>
+          </Link>
 
           <Link to="/" onClick={closeMenu} className="gap-3 py-4 border-b border-[#e5dfcf] hover:text-[#a47f12] transition">
           Home
