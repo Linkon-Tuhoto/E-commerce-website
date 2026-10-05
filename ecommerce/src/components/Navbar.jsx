@@ -8,8 +8,9 @@ import {
   X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import Cart from "../pages/Cart";
 
-function Navbar() {
+function Navbar({ cart }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const closeMenu = () => {
@@ -153,7 +154,7 @@ function Navbar() {
 
             {/* ================= DESKTOP CART ================= */}
 
-            <div className="hidden md:flex items-center gap-2 shrink-0 cursor-pointer">
+            <Link to="cart" className="hidden md:flex items-center gap-2 shrink-0 cursor-pointer">
 
               <ShoppingCart size={22} />
 
@@ -169,7 +170,7 @@ function Navbar() {
 
               </div>
 
-            </div>
+            </Link>
 
 
             {/* ================= MOBILE CART + MENU ================= */}
@@ -178,7 +179,7 @@ function Navbar() {
 
               {/* MOBILE CART */}
 
-              <div className="relative cursor-pointer">
+              <Link to="cart" className="relative cursor-pointer">
 
                 <ShoppingCart size={23} />
 
@@ -201,7 +202,7 @@ function Navbar() {
                   0
                 </span>
 
-              </div>
+              </Link>
 
 
               {/* MOBILE MENU BUTTON */}

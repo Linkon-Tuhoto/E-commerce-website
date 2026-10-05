@@ -1,0 +1,236 @@
+import { Link } from "react-router-dom";
+import {
+  Minus,
+  Plus,
+  Trash2,
+  ShoppingBag,
+  ArrowLeft,
+  ShieldCheck,
+} from "lucide-react";
+
+function Cart({ cart, setCart }) {
+  const updateQuantity = (id, amount) => {
+    setCart((currentCart) =>
+      currentCart.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              quantity: Math.max(1, item.quantity + amount),
+            }
+          : item
+      )
+    );
+  };
+
+  const removeItem = (id) => {
+    setCart((currentCart) =>
+      currentCart.filter((item) => item.id !== id)
+    );
+  };
+
+  const subtotal = cart.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
+
+  const delivery = subtotal >= 5000 ? 0 : 300;
+
+  const total = subtotal + delivery;
+
+  return (
+    <main className="min-h-screen bg-white">
+      <div className="mx-auto max-w-[1200px] px-4 py-8 md:py-12">
+
+        {/* Header */}
+        <div className="mb-8">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#B38F00]">
+            Your shopping bag
+          </p>
+
+          <h1 className="text-3xl font-semibold text-[#171717] md:text-4xl">
+            Shopping Cart
+          </h1>
+
+          <p className="mt-2 text-sm text-gray-500">
+            {cart.length} {cart.length === 1 ? "item" : "items"} in your cart
+          </p>
+        </div>
+
+        {cart.length === 0 ? (
+          /* Empty cart */
+          <div className="flex min-h-[450px] flex-col items-center justify-center rounded-2xl border border-gray-200 px-6 text-center">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#f7f3e8]">
+              <ShoppingBag size={28} className="text-[#B38F00]" />
+            </div>
+
+            <h2 className="text-xl font-semibold">
+              Your cart is empty
+            </h2>
+
+            <p className="mt-2 max-w-md text-sm text-gray-500">
+              Looks like you haven't added anything to your cart yet.
+              Explore our products and find something you love.
+            </p>
+
+            <Link
+              to="/shop"
+              className="mt-6 rounded-lg bg-[#D4AF37] px-6 py-3 text-sm font-semibold text-black transition hover:bg-[#c19d25]"
+            >
+              Continue Shopping
+            </Link>
+          </div>
+        ) : (
+          <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+
+            {/* Cart items */}
+            <div className="space-y-4">
+
+              {cart.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-gray-200 p-4"
+                >
+                  <div className="flex gap-4">
+
+                    {/* Image */}
+                    <Link
+                      to={`/product/${item.id}`}
+                      className="h-28 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-100 md:h-36 md:w-32"
+                    >
+                      <img
+                        src={item.images[0]}
+                        alt={item.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </Link>
+
+                    {/* Details */}
+                    <div className="flex min-w-0 flex-1 flex-col">
+
+                      <div className="flex justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                            {item.category}
+                          </p>
+
+                          <Link
+                            to={`/product/${item.id}`}
+                            className="mt-1 block font-semibold text-[#171717] hover:text-[#B38F00]"
+                          >
+                            {item.name}
+                          </Link>
+                        </div>
+
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          className="text-gray-400 transition hover:text-red-500"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+
+                      <div className="mt-auto flex items-end justify-between gap-4">
+
+                        {/* Quantity */}
+                        <div className="flex items-center rounded-lg border border-gray-200">
+                          <button
+                            onClick={() => updateQuantity(item.id, -1)}
+                            className="p-2 hover:bg-gray-50"
+                          >
+                            <Minus size={14} />
+                          </button>
+
+                          <span className="w-8 text-center text-sm">
+                            {item.quantity}
+                          </span>
+
+                          <button
+                            onClick={() => updateQuantity(item.id, 1)}
+                            className="p-2 hover:bg-gray-50"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+
+                        <p className="font-semibold text-[#B38F00]">
+                          KSh {(item.price * item.quantity).toLocaleString()}
+                        </p>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <Link
+                to="/shop"
+                className="inline-flex items-center gap-2 pt-2 text-sm font-medium text-gray-600 hover:text-[#B38F00]"
+              >
+                <ArrowLeft size={16} />
+                Continue shopping
+              </Link>
+            </div>
+
+            {/* Summary */}
+            <div className="h-fit rounded-xl border border-gray-200 p-6">
+
+              <h2 className="text-lg font-semibold">
+                Order Summary
+              </h2>
+
+              <div className="mt-6 space-y-4 text-sm">
+
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Subtotal</span>
+                  <span>
+                    KSh {subtotal.toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Delivery</span>
+                  <span>
+                    {delivery === 0
+                      ? "FREE"
+                      : `KSh ${delivery.toLocaleString()}`}
+                  </span>
+                </div>
+
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex justify-between text-base font-semibold">
+                    <span>Total</span>
+                    <span className="text-[#B38F00]">
+                      KSh {total.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+
+              <Link
+                to="/checkout"
+                className="mt-6 flex w-full items-center justify-center rounded-lg bg-[#D4AF37] py-3.5 text-sm font-semibold text-black transition hover:bg-[#c19d25]"
+              >
+                Proceed to Checkout
+              </Link>
+
+              <div className="mt-5 flex items-start gap-3 border-t border-gray-100 pt-5">
+                <ShieldCheck
+                  size={20}
+                  className="shrink-0 text-[#B38F00]"
+                />
+
+                <p className="text-xs leading-5 text-gray-500">
+                  Secure checkout. Your payment information is protected.
+                </p>
+              </div>
+
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+export default Cart;
