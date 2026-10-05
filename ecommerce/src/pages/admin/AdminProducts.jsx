@@ -480,7 +480,7 @@ function AdminProducts() {
 
                         {/* Edit */}
 
-                        <button
+                        <Link   to={`/admin/products/edit/${product._id}`}
                           className="
                             p-2
                             rounded-lg
@@ -492,7 +492,7 @@ function AdminProducts() {
                           title="Edit product"
                         >
                           <Pencil size={17} />
-                        </button>
+                        </Link>
 
                         {/* Delete */}
 

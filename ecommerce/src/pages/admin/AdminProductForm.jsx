@@ -1,13 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Plus, Trash2, ImagePlus } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { createProduct } from "../../services/productService";
+import {
+  createProduct,
+  getProductById,
+  updateProduct,
+} from "../../services/productService";
 
 function AdminProductForm() {
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  const isEditMode = Boolean(id);
 
   const [loading, setLoading] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(isEditMode);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
@@ -25,13 +33,10 @@ function AdminProductForm() {
     bestseller: false,
   });
 
-  // Multiple image URLs
   const [images, setImages] = useState([""]);
 
-  // Sizes
   const [sizes, setSizes] = useState([""]);
 
-  // Colors
   const [colors, setColors] = useState([
     {
       name: "",
@@ -39,7 +44,75 @@ function AdminProductForm() {
     },
   ]);
 
-  // Handle normal inputs
+  // ==========================================
+  // LOAD PRODUCT WHEN EDITING
+  // ==========================================
+
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const loadProduct = async () => {
+      try {
+        setLoadingProduct(true);
+        setError("");
+
+        const product = await getProductById(id);
+
+        setFormData({
+          name: product.name || "",
+          brand: product.brand || "",
+          sku: product.sku || "",
+          category: product.category || "Clothing",
+          gender: product.gender || "Unisex",
+          description: product.description || "",
+          price: product.price ?? "",
+          oldPrice: product.oldPrice ?? "",
+          stockQuantity: product.stockQuantity ?? "",
+          featured: product.featured || false,
+          newArrival: product.newArrival || false,
+          bestseller: product.bestseller || false,
+        });
+
+        setImages(
+          product.images?.length
+            ? product.images
+            : [""]
+        );
+
+        setSizes(
+          product.sizes?.length
+            ? product.sizes
+            : [""]
+        );
+
+        setColors(
+          product.colors?.length
+            ? product.colors
+            : [
+                {
+                  name: "",
+                  value: "",
+                },
+              ]
+        );
+      } catch (error) {
+        console.error("Failed to load product:", error);
+
+        setError(
+          error.message || "Failed to load product."
+        );
+      } finally {
+        setLoadingProduct(false);
+      }
+    };
+
+    loadProduct();
+  }, [id, isEditMode]);
+
+  // ==========================================
+  // NORMAL INPUTS
+  // ==========================================
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
@@ -49,13 +122,15 @@ function AdminProductForm() {
     }));
   };
 
-  // -------------------------
+  // ==========================================
   // IMAGES
-  // -------------------------
+  // ==========================================
 
   const handleImageChange = (index, value) => {
     const updatedImages = [...images];
+
     updatedImages[index] = value;
+
     setImages(updatedImages);
   };
 
@@ -71,13 +146,15 @@ function AdminProductForm() {
     );
   };
 
-  // -------------------------
+  // ==========================================
   // SIZES
-  // -------------------------
+  // ==========================================
 
   const handleSizeChange = (index, value) => {
     const updatedSizes = [...sizes];
+
     updatedSizes[index] = value;
+
     setSizes(updatedSizes);
   };
 
@@ -93,9 +170,9 @@ function AdminProductForm() {
     );
   };
 
-  // -------------------------
+  // ==========================================
   // COLORS
-  // -------------------------
+  // ==========================================
 
   const handleColorChange = (index, field, value) => {
     const updatedColors = [...colors];
@@ -126,16 +203,15 @@ function AdminProductForm() {
     );
   };
 
-  // -------------------------
+  // ==========================================
   // SUBMIT
-  // -------------------------
+  // ==========================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     setError("");
 
-    // Clean arrays
     const cleanedImages = images
       .map((image) => image.trim())
       .filter(Boolean);
@@ -151,7 +227,8 @@ function AdminProductForm() {
       }))
       .filter((color) => color.name && color.value);
 
-    // Basic validation
+    // Validation
+
     if (!formData.name.trim()) {
       setError("Product name is required.");
       return;
@@ -176,7 +253,9 @@ function AdminProductForm() {
       formData.oldPrice &&
       Number(formData.oldPrice) < Number(formData.price)
     ) {
-      setError("Old price should be greater than or equal to the current price.");
+      setError(
+        "Old price should be greater than or equal to the current price."
+      );
       return;
     }
 
@@ -185,10 +264,13 @@ function AdminProductForm() {
 
       const productData = {
         name: formData.name.trim(),
+
         brand: formData.brand.trim(),
+
         sku: formData.sku.trim() || undefined,
 
         category: formData.category,
+
         gender: formData.gender,
 
         description: formData.description.trim(),
@@ -214,66 +296,130 @@ function AdminProductForm() {
           Number(formData.stockQuantity) > 0,
 
         featured: formData.featured,
+
         newArrival: formData.newArrival,
+
         bestseller: formData.bestseller,
 
         tags: [],
       };
 
-      await createProduct(productData);
+      if (isEditMode) {
+        // UPDATE EXISTING PRODUCT
+        await updateProduct(id, productData);
+      } else {
+        // CREATE NEW PRODUCT
+        await createProduct(productData);
+      }
 
-      // Return to products after successful creation
       navigate("/admin/products");
+
     } catch (error) {
-      console.error("Failed to create product:", error);
+      console.error(
+        isEditMode
+          ? "Failed to update product:"
+          : "Failed to create product:",
+        error
+      );
 
       setError(
-        error.message || "Failed to create product. Please try again."
+        error.message ||
+          (isEditMode
+            ? "Failed to update product."
+            : "Failed to create product.")
       );
     } finally {
       setLoading(false);
     }
   };
 
+  // ==========================================
+  // LOADING PRODUCT
+  // ==========================================
+
+  if (loadingProduct) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+
+        <div className="text-center">
+
+          <div className="
+            w-8 h-8
+            border-4
+            border-gray-200
+            border-t-[#D4AF37]
+            rounded-full
+            animate-spin
+            mx-auto
+          " />
+
+          <p className="text-sm text-gray-500 mt-3">
+            Loading product...
+          </p>
+
+        </div>
+
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
+
       <div className="max-w-[1000px] mx-auto px-4 sm:px-6 py-8">
 
-        {/* Header */}
+        {/* HEADER */}
+
         <div className="flex items-center gap-3 mb-8">
 
           <Link
             to="/admin/products"
             className="
-              p-2 rounded-lg border bg-white
-              hover:bg-gray-100 transition
+              p-2
+              rounded-lg
+              border
+              bg-white
+              hover:bg-gray-100
+              transition
             "
           >
             <ArrowLeft size={18} />
           </Link>
 
           <div>
-            <p className="text-xs font-semibold tracking-widest text-[#b08d1f] uppercase">
+
+            <p className="
+              text-xs
+              font-semibold
+              tracking-widest
+              text-[#b08d1f]
+              uppercase
+            ">
               Administration
             </p>
 
             <h1 className="text-2xl sm:text-3xl font-semibold mt-1">
-              Add Product
+              {isEditMode ? "Edit Product" : "Add Product"}
             </h1>
 
             <p className="text-sm text-gray-500 mt-1">
-              Add a new product to your store.
+              {isEditMode
+                ? "Update this product's information."
+                : "Add a new product to your store."}
             </p>
+
           </div>
 
         </div>
 
-        {/* Error */}
+        {/* ERROR */}
+
         {error && (
           <div className="
             mb-6
             bg-red-50
-            border border-red-200
+            border
+            border-red-200
             text-red-600
             rounded-xl
             p-4
@@ -283,19 +429,38 @@ function AdminProductForm() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6"
+        >
 
-          {/* BASIC INFORMATION */}
-          <section className="bg-white border rounded-xl p-5 sm:p-6">
+          {/* =====================================
+              BASIC INFORMATION
+          ====================================== */}
+
+          <section className="
+            bg-white
+            border
+            rounded-xl
+            p-5
+            sm:p-6
+          ">
 
             <h2 className="text-lg font-semibold mb-5">
               Basic Information
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="
+              grid
+              grid-cols-1
+              md:grid-cols-2
+              gap-5
+            ">
 
-              {/* Name */}
+              {/* NAME */}
+
               <div className="md:col-span-2">
+
                 <label className="label">
                   Product Name *
                 </label>
@@ -308,10 +473,13 @@ function AdminProductForm() {
                   placeholder="e.g. Essential Linen Shirt"
                   className="input"
                 />
+
               </div>
 
-              {/* Brand */}
+              {/* BRAND */}
+
               <div>
+
                 <label className="label">
                   Brand
                 </label>
@@ -324,10 +492,13 @@ function AdminProductForm() {
                   placeholder="e.g. Mamboga"
                   className="input"
                 />
+
               </div>
 
               {/* SKU */}
+
               <div>
+
                 <label className="label">
                   SKU
                 </label>
@@ -340,10 +511,13 @@ function AdminProductForm() {
                   placeholder="e.g. SHIRT-001"
                   className="input"
                 />
+
               </div>
 
-              {/* Category */}
+              {/* CATEGORY */}
+
               <div>
+
                 <label className="label">
                   Category *
                 </label>
@@ -354,15 +528,29 @@ function AdminProductForm() {
                   onChange={handleChange}
                   className="input bg-white"
                 >
-                  <option value="Clothing">Clothing</option>
-                  <option value="Shoes">Shoes</option>
-                  <option value="Kitchen">Kitchen</option>
-                  <option value="Household">Household</option>
+                  <option value="Clothing">
+                    Clothing
+                  </option>
+
+                  <option value="Shoes">
+                    Shoes
+                  </option>
+
+                  <option value="Kitchen">
+                    Kitchen
+                  </option>
+
+                  <option value="Household">
+                    Household
+                  </option>
                 </select>
+
               </div>
 
-              {/* Gender */}
+              {/* GENDER */}
+
               <div>
+
                 <label className="label">
                   Gender
                 </label>
@@ -373,15 +561,29 @@ function AdminProductForm() {
                   onChange={handleChange}
                   className="input bg-white"
                 >
-                  <option value="Unisex">Unisex</option>
-                  <option value="Men">Men</option>
-                  <option value="Women">Women</option>
-                  <option value="Kids">Kids</option>
+                  <option value="Unisex">
+                    Unisex
+                  </option>
+
+                  <option value="Men">
+                    Men
+                  </option>
+
+                  <option value="Women">
+                    Women
+                  </option>
+
+                  <option value="Kids">
+                    Kids
+                  </option>
                 </select>
+
               </div>
 
-              {/* Description */}
+              {/* DESCRIPTION */}
+
               <div className="md:col-span-2">
+
                 <label className="label">
                   Description *
                 </label>
@@ -394,21 +596,39 @@ function AdminProductForm() {
                   placeholder="Describe the product..."
                   className="input resize-none"
                 />
+
               </div>
 
             </div>
+
           </section>
 
-          {/* PRICING & STOCK */}
-          <section className="bg-white border rounded-xl p-5 sm:p-6">
+
+          {/* =====================================
+              PRICING
+          ====================================== */}
+
+          <section className="
+            bg-white
+            border
+            rounded-xl
+            p-5
+            sm:p-6
+          ">
 
             <h2 className="text-lg font-semibold mb-5">
               Pricing & Stock
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="
+              grid
+              grid-cols-1
+              md:grid-cols-3
+              gap-5
+            ">
 
               <div>
+
                 <label className="label">
                   Price (KSh) *
                 </label>
@@ -419,12 +639,13 @@ function AdminProductForm() {
                   value={formData.price}
                   onChange={handleChange}
                   min="0"
-                  placeholder="1890"
                   className="input"
                 />
+
               </div>
 
               <div>
+
                 <label className="label">
                   Old Price (KSh)
                 </label>
@@ -435,12 +656,13 @@ function AdminProductForm() {
                   value={formData.oldPrice}
                   onChange={handleChange}
                   min="0"
-                  placeholder="2400"
                   className="input"
                 />
+
               </div>
 
               <div>
+
                 <label className="label">
                   Stock Quantity
                 </label>
@@ -451,21 +673,37 @@ function AdminProductForm() {
                   value={formData.stockQuantity}
                   onChange={handleChange}
                   min="0"
-                  placeholder="20"
                   className="input"
                 />
+
               </div>
 
             </div>
 
           </section>
 
-          {/* IMAGES */}
-          <section className="bg-white border rounded-xl p-5 sm:p-6">
 
-            <div className="flex items-center justify-between mb-5">
+          {/* =====================================
+              IMAGES
+          ====================================== */}
+
+          <section className="
+            bg-white
+            border
+            rounded-xl
+            p-5
+            sm:p-6
+          ">
+
+            <div className="
+              flex
+              items-center
+              justify-between
+              mb-5
+            ">
 
               <div>
+
                 <h2 className="text-lg font-semibold">
                   Product Images
                 </h2>
@@ -473,6 +711,7 @@ function AdminProductForm() {
                 <p className="text-sm text-gray-500 mt-1">
                   Add image URLs for this product.
                 </p>
+
               </div>
 
               <ImagePlus
@@ -485,6 +724,7 @@ function AdminProductForm() {
             <div className="space-y-3">
 
               {images.map((image, index) => (
+
                 <div
                   key={index}
                   className="flex gap-2"
@@ -494,28 +734,35 @@ function AdminProductForm() {
                     type="url"
                     value={image}
                     onChange={(e) =>
-                      handleImageChange(index, e.target.value)
+                      handleImageChange(
+                        index,
+                        e.target.value
+                      )
                     }
-                    placeholder="https://example.com/product-image.jpg"
+                    placeholder="https://example.com/image.jpg"
                     className="input flex-1"
                   />
 
                   <button
                     type="button"
-                    onClick={() => removeImage(index)}
+                    onClick={() =>
+                      removeImage(index)
+                    }
                     disabled={images.length === 1}
                     className="
-                      p-2.5 rounded-lg border
+                      p-2.5
+                      rounded-lg
+                      border
                       text-red-500
                       hover:bg-red-50
                       disabled:opacity-40
-                      disabled:cursor-not-allowed
                     "
                   >
                     <Trash2 size={18} />
                   </button>
 
                 </div>
+
               ))}
 
             </div>
@@ -525,10 +772,12 @@ function AdminProductForm() {
               onClick={addImage}
               className="
                 mt-4
-                flex items-center gap-2
-                text-sm font-medium
+                flex
+                items-center
+                gap-2
+                text-sm
+                font-medium
                 text-[#a17d08]
-                hover:text-[#806306]
               "
             >
               <Plus size={17} />
@@ -537,8 +786,18 @@ function AdminProductForm() {
 
           </section>
 
-          {/* SIZES */}
-          <section className="bg-white border rounded-xl p-5 sm:p-6">
+
+          {/* =====================================
+              SIZES
+          ====================================== */}
+
+          <section className="
+            bg-white
+            border
+            rounded-xl
+            p-5
+            sm:p-6
+          ">
 
             <h2 className="text-lg font-semibold">
               Sizes
@@ -551,6 +810,7 @@ function AdminProductForm() {
             <div className="space-y-3">
 
               {sizes.map((size, index) => (
+
                 <div
                   key={index}
                   className="flex gap-2"
@@ -560,7 +820,10 @@ function AdminProductForm() {
                     type="text"
                     value={size}
                     onChange={(e) =>
-                      handleSizeChange(index, e.target.value)
+                      handleSizeChange(
+                        index,
+                        e.target.value
+                      )
                     }
                     placeholder="e.g. M"
                     className="input flex-1"
@@ -568,10 +831,14 @@ function AdminProductForm() {
 
                   <button
                     type="button"
-                    onClick={() => removeSize(index)}
+                    onClick={() =>
+                      removeSize(index)
+                    }
                     disabled={sizes.length === 1}
                     className="
-                      p-2.5 rounded-lg border
+                      p-2.5
+                      rounded-lg
+                      border
                       text-red-500
                       hover:bg-red-50
                       disabled:opacity-40
@@ -581,6 +848,7 @@ function AdminProductForm() {
                   </button>
 
                 </div>
+
               ))}
 
             </div>
@@ -590,8 +858,11 @@ function AdminProductForm() {
               onClick={addSize}
               className="
                 mt-4
-                flex items-center gap-2
-                text-sm font-medium
+                flex
+                items-center
+                gap-2
+                text-sm
+                font-medium
                 text-[#a17d08]
               "
             >
@@ -601,8 +872,18 @@ function AdminProductForm() {
 
           </section>
 
-          {/* COLORS */}
-          <section className="bg-white border rounded-xl p-5 sm:p-6">
+
+          {/* =====================================
+              COLORS
+          ====================================== */}
+
+          <section className="
+            bg-white
+            border
+            rounded-xl
+            p-5
+            sm:p-6
+          ">
 
             <h2 className="text-lg font-semibold">
               Colors
@@ -615,9 +896,14 @@ function AdminProductForm() {
             <div className="space-y-3">
 
               {colors.map((color, index) => (
+
                 <div
                   key={index}
-                  className="grid grid-cols-[1fr_1fr_auto] gap-2"
+                  className="
+                    grid
+                    grid-cols-[1fr_1fr_auto]
+                    gap-2
+                  "
                 >
 
                   <input
@@ -650,10 +936,14 @@ function AdminProductForm() {
 
                   <button
                     type="button"
-                    onClick={() => removeColor(index)}
+                    onClick={() =>
+                      removeColor(index)
+                    }
                     disabled={colors.length === 1}
                     className="
-                      p-2.5 rounded-lg border
+                      p-2.5
+                      rounded-lg
+                      border
                       text-red-500
                       hover:bg-red-50
                       disabled:opacity-40
@@ -663,6 +953,7 @@ function AdminProductForm() {
                   </button>
 
                 </div>
+
               ))}
 
             </div>
@@ -672,8 +963,11 @@ function AdminProductForm() {
               onClick={addColor}
               className="
                 mt-4
-                flex items-center gap-2
-                text-sm font-medium
+                flex
+                items-center
+                gap-2
+                text-sm
+                font-medium
                 text-[#a17d08]
               "
             >
@@ -683,8 +977,18 @@ function AdminProductForm() {
 
           </section>
 
-          {/* STORE SETTINGS */}
-          <section className="bg-white border rounded-xl p-5 sm:p-6">
+
+          {/* =====================================
+              STORE SETTINGS
+          ====================================== */}
+
+          <section className="
+            bg-white
+            border
+            rounded-xl
+            p-5
+            sm:p-6
+          ">
 
             <h2 className="text-lg font-semibold mb-5">
               Store Settings
@@ -693,6 +997,7 @@ function AdminProductForm() {
             <div className="space-y-4">
 
               <label className="flex items-start gap-3 cursor-pointer">
+
                 <input
                   type="checkbox"
                   name="featured"
@@ -707,12 +1012,15 @@ function AdminProductForm() {
                   </p>
 
                   <p className="text-xs text-gray-500">
-                    Show this product in the featured products section.
+                    Show this product in featured products.
                   </p>
                 </div>
+
               </label>
 
+
               <label className="flex items-start gap-3 cursor-pointer">
+
                 <input
                   type="checkbox"
                   name="newArrival"
@@ -727,12 +1035,15 @@ function AdminProductForm() {
                   </p>
 
                   <p className="text-xs text-gray-500">
-                    Mark this product as a newly added product.
+                    Mark this product as a new arrival.
                   </p>
                 </div>
+
               </label>
 
+
               <label className="flex items-start gap-3 cursor-pointer">
+
                 <input
                   type="checkbox"
                   name="bestseller"
@@ -750,19 +1061,31 @@ function AdminProductForm() {
                     Mark this product as a bestseller.
                   </p>
                 </div>
+
               </label>
 
             </div>
 
           </section>
 
-          {/* ACTIONS */}
-          <div className="flex flex-col sm:flex-row justify-end gap-3">
+
+          {/* =====================================
+              ACTIONS
+          ====================================== */}
+
+          <div className="
+            flex
+            flex-col
+            sm:flex-row
+            justify-end
+            gap-3
+          ">
 
             <Link
               to="/admin/products"
               className="
-                px-5 py-2.5
+                px-5
+                py-2.5
                 rounded-lg
                 border
                 bg-white
@@ -780,7 +1103,8 @@ function AdminProductForm() {
               type="submit"
               disabled={loading}
               className="
-                px-6 py-2.5
+                px-6
+                py-2.5
                 rounded-lg
                 bg-[#D4AF37]
                 hover:bg-[#c19d25]
@@ -792,7 +1116,13 @@ function AdminProductForm() {
                 disabled:cursor-not-allowed
               "
             >
-              {loading ? "Saving Product..." : "Save Product"}
+              {loading
+                ? isEditMode
+                  ? "Updating Product..."
+                  : "Saving Product..."
+                : isEditMode
+                  ? "Update Product"
+                  : "Save Product"}
             </button>
 
           </div>

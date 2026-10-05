@@ -115,6 +115,11 @@ function AppContent() {
             element={<AdminProductForm />}
           />
 
+          <Route
+            path="products/edit/:id"
+            element={<AdminProductForm />}
+          />
+
         </Route>
 
       </Routes>
