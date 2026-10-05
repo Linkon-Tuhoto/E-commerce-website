@@ -8,6 +8,7 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Cart from './pages/Cart'
 import Wishlist from './pages/Wishlist'
+import SignIn from './pages/SignIn'
 
 function App() {
   const [cart, setCart] = useState([]);
@@ -24,6 +25,7 @@ function App() {
         <Route path="/product/:id" element={<ProductDetails cart={cart} setCart={setCart} />} />
         <Route path="/cart" element={<Cart cart={cart} setCart={setCart} />} />
         <Route path="/wishlist" element={<Wishlist setCart={setCart} wishlist={wishlist} setWishlist={setWishlist} />} />
+        <Route path="/signin" element={<SignIn />} />
 
       </Routes>
       <Footer />

@@ -132,9 +132,9 @@ function Navbar({ cart }) {
                   Account
                 </p>
 
-                <p className="text-xs text-gray-500">
+                <Link to="/signin" className="text-xs text-gray-500">
                   Sign in
-                </p>
+                </Link>
 
               </div>
 
@@ -509,9 +509,9 @@ function Navbar({ cart }) {
                 Account
               </p>
 
-              <p className="text-xs text-gray-500">
+              <Link to="/signin" className="text-xs text-gray-500">
                 Sign In
-              </p>
+              </Link>
 
             </div>
 
