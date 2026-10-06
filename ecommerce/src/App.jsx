@@ -10,9 +10,12 @@ import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import SignIn from "./pages/SignIn";
 
+import { AuthProvider } from "./context/AuthContext";
+
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminLayout from "./pages/admin/adminLayout";
 import AdminProductForm from "./pages/admin/AdminProductForm";
+import AdminOrders from "./pages/admin/AdminOrders";
 
 
 function AppContent() {
@@ -120,6 +123,11 @@ function AppContent() {
             element={<AdminProductForm />}
           />
 
+          <Route
+            path="orders"
+            element={<AdminOrders />}
+          />
+
         </Route>
 
       </Routes>
@@ -133,7 +141,9 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </BrowserRouter>
   );
 }
