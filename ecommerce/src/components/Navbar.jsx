@@ -126,17 +126,17 @@ function Navbar({ cart }) {
 
               <User size={21} />
 
-              <div>
+              <Link to="/signin" className="flex flex-col">
 
                 <p className="text-sm font-semibold">
                   Account
                 </p>
 
-                <Link to="/signin" className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500">
                   Sign in
-                </Link>
+                </p>
 
-              </div>
+              </Link>
 
             </div>
 
@@ -485,8 +485,8 @@ function Navbar({ cart }) {
 
           {/* ACCOUNT */}
 
-          <a
-            href="#"
+          <Link
+            to="/signin"
             onClick={closeMenu}
             className="
               flex
@@ -509,13 +509,13 @@ function Navbar({ cart }) {
                 Account
               </p>
 
-              <Link to="/signin" className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500">
                 Sign In
-              </Link>
+              </p>
 
             </div>
 
-          </a>
+          </Link>
 
 
           {/* WISH LIST */}

@@ -9,6 +9,7 @@ import Footer from "./components/Footer";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import SignIn from "./pages/SignIn";
+import Register from "./pages/Register";
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -87,6 +88,11 @@ function AppContent() {
         <Route
           path="/signin"
           element={<SignIn />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
         />
 
 
