@@ -317,7 +317,7 @@ function FeaturedProducts({ cart, setCart }) {
           </div>
 
           <Link
-            to="/shop"
+            to="/featured-products"
             className="
               flex
               items-center

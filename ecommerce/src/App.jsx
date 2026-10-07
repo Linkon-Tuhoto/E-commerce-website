@@ -10,6 +10,7 @@ import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import SignIn from "./pages/SignIn";
 import Register from "./pages/Register";
+import FeaturedProducts from "./pages/FeaturedProducts";
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -91,6 +92,16 @@ function AppContent() {
               setCart={setCart}
               wishlist={wishlist}
               setWishlist={setWishlist}
+            />
+          }
+        />
+
+        <Route
+          path="/featured-products"
+          element={
+            <FeaturedProducts
+              cart={cart}
+              setCart={setCart}
             />
           }
         />
