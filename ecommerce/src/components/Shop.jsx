@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import {
   Heart,
@@ -14,56 +14,131 @@ import {
 
 import { getProducts } from "../services/productService";
 
-// =========================
-// FILTER COMPONENT
-// =========================
+import {
+  addToCart as addCartItem,
+} from "../services/cartService";
 
-function Filters() {
+import {
+  getMyWishlist,
+  addToWishlist,
+  removeFromWishlist,
+} from "../services/wishlistService";
+
+
+// ======================================================
+// AUTH TOKEN
+// ======================================================
+
+const getToken = () => {
+  return (
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken")
+  );
+};
+
+
+// ======================================================
+// FILTERS
+// ======================================================
+
+function Filters({
+  products,
+  selectedCategory,
+  setSelectedCategory,
+}) {
+  const categories = [
+    "Clothing",
+    "Shoes",
+    "Kitchen",
+    "Household",
+  ];
+
   return (
     <div className="space-y-1">
 
       {/* CATEGORY */}
+
       <div className="border-b border-gray-200 pb-5">
 
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">Category</h3>
+          <h3 className="font-semibold">
+            Category
+          </h3>
+
           <Minus size={16} />
         </div>
 
         <div className="space-y-3">
 
-          {[
-            ["Clothing", 0],
-            ["Shoes", 0],
-            ["Kitchen", 0],
-            ["Household", 0],
-          ].map(([name, count]) => (
-            <label
-              key={name}
-              className="flex items-center justify-between text-sm cursor-pointer"
-            >
+          <label className="flex items-center justify-between text-sm cursor-pointer">
 
-              <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2">
 
-                <input
-                  type="checkbox"
-                  className="accent-[#D4AF37]"
-                />
+              <input
+                type="checkbox"
+                checked={selectedCategory === ""}
+                onChange={() =>
+                  setSelectedCategory("")
+                }
+                className="accent-[#D4AF37]"
+              />
 
-                {name}
+              All products
 
-              </span>
+            </span>
 
-              <span className="text-xs text-gray-400">
-                {count}
-              </span>
+            <span className="text-xs text-gray-400">
+              {products.length}
+            </span>
 
-            </label>
-          ))}
+          </label>
+
+
+          {categories.map((category) => {
+
+            const count = products.filter(
+              (product) =>
+                product.category === category
+            ).length;
+
+            return (
+              <label
+                key={category}
+                className="flex items-center justify-between text-sm cursor-pointer"
+              >
+
+                <span className="flex items-center gap-2">
+
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedCategory === category
+                    }
+                    onChange={() =>
+                      setSelectedCategory(
+                        selectedCategory === category
+                          ? ""
+                          : category
+                      )
+                    }
+                    className="accent-[#D4AF37]"
+                  />
+
+                  {category}
+
+                </span>
+
+                <span className="text-xs text-gray-400">
+                  {count}
+                </span>
+
+              </label>
+            );
+          })}
 
         </div>
-
       </div>
+
 
       {/* OTHER FILTERS */}
 
@@ -75,6 +150,7 @@ function Filters() {
         "Rating",
         "Discount",
       ].map((filter) => (
+
         <button
           key={filter}
           type="button"
@@ -96,40 +172,58 @@ function Filters() {
           <Plus size={17} />
 
         </button>
+
       ))}
 
     </div>
   );
 }
 
-// =========================
+
+// ======================================================
 // PRODUCT CARD
-// =========================
+// ======================================================
 
-function ProductCard({ product, setCart }) {
+function ProductCard({
+  product,
+  setCart,
+  wishlistIds,
+  setWishlistIds,
+}) {
 
-  const [selectedSize, setSelectedSize] = useState(
-    product?.sizes?.length
-      ? product.sizes[0]
-      : ""
-  );
+  const navigate = useNavigate();
 
-  const [selectedColor, setSelectedColor] = useState(
-    product?.colors?.length
-      ? product.colors[0]
-      : null
-  );
+  const [selectedSize, setSelectedSize] =
+    useState(
+      product?.sizes?.length
+        ? product.sizes[0]
+        : ""
+    );
+
+  const [selectedColor, setSelectedColor] =
+    useState(
+      product?.colors?.length
+        ? product.colors[0]
+        : null
+    );
 
   const [selectedImageIndex, setSelectedImageIndex] =
     useState(0);
 
-  const [added, setAdded] = useState(false);
+  const [added, setAdded] =
+    useState(false);
 
-  const hasSizes = product?.sizes?.length > 0;
+  const [wishlistLoading, setWishlistLoading] =
+    useState(false);
 
-  const hasColors = product?.colors?.length > 0;
+  const hasSizes =
+    product?.sizes?.length > 0;
 
-  const hasImages = product?.images?.length > 0;
+  const hasColors =
+    product?.colors?.length > 0;
+
+  const hasImages =
+    product?.images?.length > 0;
 
   const isAvailable =
     product?.inStock !== false &&
@@ -138,15 +232,21 @@ function ProductCard({ product, setCart }) {
       product?.stockQuantity > 0
     );
 
-  // =========================
+  const isWishlisted =
+    wishlistIds.includes(product._id);
+
+
+  // ==================================================
   // COLOR CHANGE
-  // =========================
+  // ==================================================
 
   const handleColorChange = (colorName) => {
 
-    const colorIndex = product.colors.findIndex(
-      (color) => color.name === colorName
-    );
+    const colorIndex =
+      product.colors.findIndex(
+        (color) =>
+          color.name === colorName
+      );
 
     const color =
       product.colors[colorIndex] || null;
@@ -154,8 +254,7 @@ function ProductCard({ product, setCart }) {
     setSelectedColor(color);
 
     /*
-      For now, images and colors are connected
-      by their position.
+      For now:
 
       Color 0 → Image 0
       Color 1 → Image 1
@@ -164,89 +263,194 @@ function ProductCard({ product, setCart }) {
 
     if (
       product.images?.length ===
-      product.colors?.length &&
+        product.colors?.length &&
       colorIndex >= 0
     ) {
-      setSelectedImageIndex(colorIndex);
+      setSelectedImageIndex(
+        colorIndex
+      );
     }
   };
 
-  // =========================
-  // ADD TO CART
-  // =========================
 
-  const addToCart = () => {
+  // ==================================================
+  // LOGIN CHECK
+  // ==================================================
+
+  const requireLogin = () => {
+
+    const token = getToken();
+
+    if (!token) {
+
+      navigate("/signin", {
+        state: {
+          from: "/shop",
+          message:
+            "Please sign in to continue.",
+        },
+      });
+
+      return false;
+    }
+
+    return true;
+  };
+
+
+  // ==================================================
+  // ADD TO CART
+  // ==================================================
+
+  const handleAddToCart = async () => {
 
     if (!isAvailable) {
       return;
     }
 
+    if (!requireLogin()) {
+      return;
+    }
+
     if (hasSizes && !selectedSize) {
+
       alert("Please select a size.");
+
       return;
     }
 
     if (hasColors && !selectedColor) {
+
       alert("Please select a color.");
+
       return;
     }
 
-    const cartItem = {
-      ...product,
+    try {
 
-      selectedSize,
+      const result = await addCartItem({
 
-      selectedColor,
+        productId: product._id,
 
-      selectedImage:
-        product.images?.[selectedImageIndex] || "",
+        quantity: 1,
 
-      quantity: 1,
-    };
+        size: selectedSize,
 
-    setCart((currentCart = []) => {
+        color: selectedColor
+          ? {
+              name: selectedColor.name,
+              value: selectedColor.value,
+            }
+          : {},
+      });
 
-      const existing = currentCart.find(
-        (item) =>
-          item._id === product._id &&
-          item.selectedSize === selectedSize &&
-          item.selectedColor?.name ===
-            selectedColor?.name
-      );
 
-      if (existing) {
+      /*
+        Backend returns:
 
-        return currentCart.map((item) =>
-          item._id === product._id &&
-          item.selectedSize === selectedSize &&
-          item.selectedColor?.name ===
-            selectedColor?.name
-            ? {
-                ...item,
-                quantity:
-                  item.quantity + 1,
-              }
-            : item
+        {
+          message,
+          cart
+        }
+      */
+
+      if (result.cart) {
+
+        setCart(
+          result.cart.items || []
         );
-
       }
 
-      return [
-        ...currentCart,
-        cartItem,
-      ];
 
-    });
+      setAdded(true);
 
-    setAdded(true);
+      setTimeout(() => {
+        setAdded(false);
+      }, 1500);
 
-    setTimeout(() => {
-      setAdded(false);
-    }, 1500);
+    } catch (error) {
+
+      console.error(
+        "Add to cart failed:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Failed to add product to cart."
+      );
+    }
   };
 
-  return (
 
+  // ==================================================
+  // WISHLIST
+  // ==================================================
+
+  const handleWishlist = async (event) => {
+
+    event.preventDefault();
+
+    if (wishlistLoading) {
+      return;
+    }
+
+    if (!requireLogin()) {
+      return;
+    }
+
+    try {
+
+      setWishlistLoading(true);
+
+      if (isWishlisted) {
+
+        await removeFromWishlist(
+          product._id
+        );
+
+        setWishlistIds(
+          (current) =>
+            current.filter(
+              (id) =>
+                id !== product._id
+            )
+        );
+
+      } else {
+
+        await addToWishlist(
+          product._id
+        );
+
+        setWishlistIds(
+          (current) => [
+            ...current,
+            product._id,
+          ]
+        );
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Wishlist error:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Failed to update wishlist."
+      );
+
+    } finally {
+
+      setWishlistLoading(false);
+    }
+  };
+
+
+  return (
     <div
       className="
         bg-white
@@ -260,9 +464,9 @@ function ProductCard({ product, setCart }) {
       "
     >
 
-      {/* =========================
+      {/* ==================================================
           IMAGE
-      ========================= */}
+      ================================================== */}
 
       <div className="relative">
 
@@ -283,7 +487,9 @@ function ProductCard({ product, setCart }) {
             <img
               src={
                 hasImages
-                  ? product.images[selectedImageIndex]
+                  ? product.images[
+                      selectedImageIndex
+                    ]
                   : "https://via.placeholder.com/600"
               }
               alt={product.name}
@@ -297,9 +503,11 @@ function ProductCard({ product, setCart }) {
               "
             />
 
-            {/* BADGE */}
+
+            {/* NEW */}
 
             {product.newArrival && (
+
               <span
                 className="
                   absolute
@@ -316,10 +524,15 @@ function ProductCard({ product, setCart }) {
               >
                 NEW
               </span>
+
             )}
+
+
+            {/* BESTSELLER */}
 
             {!product.newArrival &&
               product.bestseller && (
+
                 <span
                   className="
                     absolute
@@ -336,11 +549,14 @@ function ProductCard({ product, setCart }) {
                 >
                   BESTSELLER
                 </span>
-              )}
+
+            )}
+
 
             {/* OUT OF STOCK */}
 
             {!isAvailable && (
+
               <div
                 className="
                   absolute
@@ -366,103 +582,121 @@ function ProductCard({ product, setCart }) {
                 </span>
 
               </div>
+
             )}
-
-            {/* WISHLIST */}
-
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-              }}
-              className="
-                absolute
-                top-3
-                right-3
-                w-9
-                h-9
-                rounded-full
-                bg-white
-                flex
-                items-center
-                justify-center
-                shadow-sm
-                hover:bg-gray-50
-              "
-            >
-              <Heart size={18} />
-            </button>
 
           </div>
 
         </Link>
 
-        {/* =========================
-            IMAGE THUMBNAILS
-        ========================= */}
 
-        {product?.images?.length > 1 && (
+        {/* WISHLIST BUTTON */}
 
-          <div
-            className="
-              flex
-              gap-2
-              px-3
-              py-2
-              overflow-x-auto
-            "
-          >
+        <button
+          type="button"
+          onClick={handleWishlist}
+          disabled={wishlistLoading}
+          className="
+            absolute
+            top-3
+            right-3
+            w-9
+            h-9
+            rounded-full
+            bg-white
+            flex
+            items-center
+            justify-center
+            shadow-sm
+            hover:bg-gray-50
+            transition
+          "
+        >
 
-            {product.images.map(
-              (image, index) => (
+          <Heart
+            size={18}
+            className={
+              isWishlisted
+                ? "fill-[#D4AF37] text-[#D4AF37]"
+                : "text-gray-700"
+            }
+          />
 
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() =>
-                    setSelectedImageIndex(index)
-                  }
-                  className={`
-                    w-12
-                    h-12
-                    shrink-0
-                    rounded-md
-                    overflow-hidden
-                    border-2
-                    transition
-
-                    ${
-                      selectedImageIndex === index
-                        ? "border-[#D4AF37]"
-                        : "border-transparent"
-                    }
-                  `}
-                >
-
-                  <img
-                    src={image}
-                    alt={`${product.name} ${index + 1}`}
-                    className="
-                      w-full
-                      h-full
-                      object-cover
-                    "
-                  />
-
-                </button>
-
-              )
-            )}
-
-          </div>
-
-        )}
+        </button>
 
       </div>
 
-      {/* =========================
+
+      {/* ==================================================
+          IMAGE THUMBNAILS
+      ================================================== */}
+
+      {product?.images?.length > 1 && (
+
+        <div
+          className="
+            flex
+            gap-2
+            px-3
+            py-2
+            overflow-x-auto
+          "
+        >
+
+          {product.images.map(
+            (image, index) => (
+
+              <button
+                key={index}
+                type="button"
+                onClick={() =>
+                  setSelectedImageIndex(
+                    index
+                  )
+                }
+                className={`
+                  w-12
+                  h-12
+                  shrink-0
+                  rounded-md
+                  overflow-hidden
+                  border-2
+                  transition
+
+                  ${
+                    selectedImageIndex ===
+                    index
+                      ? "border-[#D4AF37]"
+                      : "border-transparent"
+                  }
+                `}
+              >
+
+                <img
+                  src={image}
+                  alt={`${product.name} ${
+                    index + 1
+                  }`}
+                  className="
+                    w-full
+                    h-full
+                    object-cover
+                  "
+                />
+
+              </button>
+
+            )
+          )}
+
+        </div>
+
+      )}
+
+
+      {/* ==================================================
           DETAILS
-      ========================= */}
+      ================================================== */}
 
       <div className="p-4">
 
@@ -470,8 +704,6 @@ function ProductCard({ product, setCart }) {
           to={`/product/${product._id}`}
           className="block"
         >
-
-          {/* CATEGORY */}
 
           <p
             className="
@@ -485,11 +717,11 @@ function ProductCard({ product, setCart }) {
             {product.category}
           </p>
 
-          {/* NAME */}
 
           <h3 className="font-semibold text-sm mb-2">
             {product.name}
           </h3>
+
 
           {/* RATING */}
 
@@ -511,9 +743,10 @@ function ProductCard({ product, setCart }) {
 
         </Link>
 
-        {/* =========================
+
+        {/* ==================================================
             SIZE
-        ========================= */}
+        ================================================== */}
 
         {hasSizes && (
 
@@ -534,7 +767,9 @@ function ProductCard({ product, setCart }) {
             <select
               value={selectedSize}
               onChange={(e) =>
-                setSelectedSize(e.target.value)
+                setSelectedSize(
+                  e.target.value
+                )
               }
               className="
                 w-full
@@ -568,9 +803,10 @@ function ProductCard({ product, setCart }) {
 
         )}
 
-        {/* =========================
+
+        {/* ==================================================
             COLOR
-        ========================= */}
+        ================================================== */}
 
         {hasColors && (
 
@@ -590,7 +826,8 @@ function ProductCard({ product, setCart }) {
 
             <select
               value={
-                selectedColor?.name || ""
+                selectedColor?.name ||
+                ""
               }
               onChange={(e) =>
                 handleColorChange(
@@ -629,11 +866,19 @@ function ProductCard({ product, setCart }) {
 
         )}
 
-        {/* =========================
-            PRICE
-        ========================= */}
 
-        <div className="flex items-center gap-2 mb-3">
+        {/* ==================================================
+            PRICE
+        ================================================== */}
+
+        <div
+          className="
+            flex
+            items-center
+            gap-2
+            mb-3
+          "
+        >
 
           <span
             className="
@@ -666,13 +911,14 @@ function ProductCard({ product, setCart }) {
 
         </div>
 
-        {/* =========================
+
+        {/* ==================================================
             ADD TO CART
-        ========================= */}
+        ================================================== */}
 
         <button
           type="button"
-          onClick={addToCart}
+          onClick={handleAddToCart}
           disabled={!isAvailable}
           className="
             w-full
@@ -709,11 +955,14 @@ function ProductCard({ product, setCart }) {
   );
 }
 
-// =========================
+
+// ======================================================
 // SHOP PAGE
-// =========================
+// ======================================================
 
 function Shop({ cart, setCart }) {
+
+  const location = useLocation();
 
   const [products, setProducts] =
     useState([]);
@@ -730,11 +979,44 @@ function Shop({ cart, setCart }) {
   const [error, setError] =
     useState("");
 
+  const [wishlistIds, setWishlistIds] =
+    useState([]);
+
+  const [selectedCategory, setSelectedCategory] =
+    useState("");
+
+
   const productsPerPage = 8;
 
-  // =========================
+
+  // ==================================================
+  // GET CATEGORY FROM URL
+  // ==================================================
+
+  useEffect(() => {
+
+    const params =
+      new URLSearchParams(
+        location.search
+      );
+
+    const category =
+      params.get("category");
+
+    if (category) {
+      setSelectedCategory(category);
+    } else {
+      setSelectedCategory("");
+    }
+
+    setCurrentPage(1);
+
+  }, [location.search]);
+
+
+  // ==================================================
   // FETCH PRODUCTS
-  // =========================
+  // ==================================================
 
   useEffect(() => {
 
@@ -745,7 +1027,8 @@ function Shop({ cart, setCart }) {
         setLoading(true);
         setError("");
 
-        const data = await getProducts();
+        const data =
+          await getProducts();
 
         setProducts(data);
 
@@ -772,28 +1055,89 @@ function Shop({ cart, setCart }) {
 
   }, []);
 
-  // =========================
+
+  // ==================================================
+  // FETCH WISHLIST
+  // ==================================================
+
+  useEffect(() => {
+
+    const fetchWishlist = async () => {
+
+      const token = getToken();
+
+      if (!token) {
+        setWishlistIds([]);
+        return;
+      }
+
+      try {
+
+        const data =
+          await getMyWishlist();
+
+        const ids =
+          (data.products || []).map(
+            (product) =>
+              product._id
+        );
+
+        setWishlistIds(ids);
+
+      } catch (error) {
+
+        console.error(
+          "Failed to load wishlist:",
+          error
+        );
+
+      }
+
+    };
+
+    fetchWishlist();
+
+  }, []);
+
+
+  // ==================================================
+  // FILTER PRODUCTS
+  // ==================================================
+
+  const filteredProducts =
+    selectedCategory
+      ? products.filter(
+          (product) =>
+            product.category ===
+            selectedCategory
+        )
+      : products;
+
+
+  // ==================================================
   // PAGINATION
-  // =========================
+  // ==================================================
 
   const totalPages = Math.max(
     1,
     Math.ceil(
-      products.length /
+      filteredProducts.length /
         productsPerPage
     )
   );
+
 
   const startIndex =
     (currentPage - 1) *
     productsPerPage;
 
+
   const currentProducts =
-    products.slice(
+    filteredProducts.slice(
       startIndex,
-      startIndex +
-        productsPerPage
+      startIndex + productsPerPage
     );
+
 
   const changePage = (page) => {
 
@@ -813,13 +1157,18 @@ function Shop({ cart, setCart }) {
 
   };
 
+
+  // ==================================================
+  // RENDER
+  // ==================================================
+
   return (
 
     <main className="bg-white min-h-screen">
 
-      {/* =========================
+      {/* ==================================================
           PAGE HEADER
-      ========================= */}
+      ================================================== */}
 
       <section
         className="
@@ -844,6 +1193,7 @@ function Shop({ cart, setCart }) {
           SHOP MAMBOGA
         </p>
 
+
         <div
           className="
             flex
@@ -862,7 +1212,8 @@ function Shop({ cart, setCart }) {
                 font-semibold
               "
             >
-              All products
+              {selectedCategory ||
+                "All products"}
             </h1>
 
             <p
@@ -872,10 +1223,14 @@ function Shop({ cart, setCart }) {
                 mt-2
               "
             >
-              Browse our carefully selected products
+              Browse our carefully
+              selected products
             </p>
 
           </div>
+
+
+          {/* SORT */}
 
           <select
             className="
@@ -890,6 +1245,7 @@ function Shop({ cart, setCart }) {
               outline-none
             "
           >
+
             <option>
               Recommended
             </option>
@@ -909,6 +1265,7 @@ function Shop({ cart, setCart }) {
           </select>
 
         </div>
+
 
         {/* MOBILE CONTROLS */}
 
@@ -949,6 +1306,7 @@ function Shop({ cart, setCart }) {
 
           </button>
 
+
           <select
             className="
               flex-1
@@ -984,9 +1342,10 @@ function Shop({ cart, setCart }) {
 
       </section>
 
-      {/* =========================
+
+      {/* ==================================================
           PRODUCTS
-      ========================= */}
+      ================================================== */}
 
       <section
         className="
@@ -1000,7 +1359,8 @@ function Shop({ cart, setCart }) {
 
         <div className="flex gap-8">
 
-          {/* FILTER */}
+
+          {/* DESKTOP FILTER */}
 
           <aside
             className="
@@ -1011,11 +1371,20 @@ function Shop({ cart, setCart }) {
             "
           >
 
-            <Filters />
+            <Filters
+              products={products}
+              selectedCategory={
+                selectedCategory
+              }
+              setSelectedCategory={
+                setSelectedCategory
+              }
+            />
 
           </aside>
 
-          {/* PRODUCTS */}
+
+          {/* PRODUCT AREA */}
 
           <div className="flex-1">
 
@@ -1050,55 +1419,56 @@ function Shop({ cart, setCart }) {
 
               )}
 
+
               {/* ERROR */}
 
-              {!loading &&
-                error && (
+              {!loading && error && (
 
-                  <div
-                    className="
-                      col-span-full
-                      flex
-                      justify-center
-                      py-20
-                    "
-                  >
+                <div
+                  className="
+                    col-span-full
+                    flex
+                    justify-center
+                    py-20
+                  "
+                >
 
-                    <div className="text-center">
+                  <div className="text-center">
 
-                      <p
-                        className="
-                          text-sm
-                          text-red-500
-                          mb-4
-                        "
-                      >
-                        {error}
-                      </p>
+                    <p
+                      className="
+                        text-sm
+                        text-red-500
+                        mb-4
+                      "
+                    >
+                      {error}
+                    </p>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          window.location.reload()
-                        }
-                        className="
-                          bg-[#D4AF37]
-                          hover:bg-[#c19d25]
-                          px-4
-                          py-2
-                          rounded-lg
-                          text-sm
-                          font-semibold
-                        "
-                      >
-                        Try again
-                      </button>
-
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        window.location.reload()
+                      }
+                      className="
+                        bg-[#D4AF37]
+                        hover:bg-[#c19d25]
+                        px-4
+                        py-2
+                        rounded-lg
+                        text-sm
+                        font-semibold
+                      "
+                    >
+                      Try again
+                    </button>
 
                   </div>
 
-                )}
+                </div>
+
+              )}
+
 
               {/* EMPTY */}
 
@@ -1128,7 +1498,9 @@ function Shop({ cart, setCart }) {
                           mt-1
                         "
                       >
-                        Products added by the admin will appear here.
+                        Products added by
+                        the admin will
+                        appear here.
                       </p>
 
                     </div>
@@ -1136,6 +1508,7 @@ function Shop({ cart, setCart }) {
                   </div>
 
                 )}
+
 
               {/* PRODUCTS */}
 
@@ -1149,6 +1522,12 @@ function Shop({ cart, setCart }) {
                       product={product}
                       cart={cart}
                       setCart={setCart}
+                      wishlistIds={
+                        wishlistIds
+                      }
+                      setWishlistIds={
+                        setWishlistIds
+                      }
                     />
 
                   )
@@ -1156,11 +1535,14 @@ function Shop({ cart, setCart }) {
 
             </div>
 
-            {/* PAGINATION */}
+
+            {/* ==================================================
+                PAGINATION
+            ================================================== */}
 
             {!loading &&
               !error &&
-              products.length > 0 && (
+              filteredProducts.length > 0 && (
 
                 <div
                   className="
@@ -1209,6 +1591,7 @@ function Shop({ cart, setCart }) {
 
                     </button>
 
+
                     {Array.from(
                       {
                         length:
@@ -1244,6 +1627,7 @@ function Shop({ cart, setCart }) {
 
                     ))}
 
+
                     <button
                       type="button"
                       disabled={
@@ -1276,6 +1660,7 @@ function Shop({ cart, setCart }) {
 
                   </div>
 
+
                   <p
                     className="
                       text-xs
@@ -1297,9 +1682,10 @@ function Shop({ cart, setCart }) {
 
       </section>
 
-      {/* =========================
+
+      {/* ==================================================
           MOBILE FILTER
-      ========================= */}
+      ================================================== */}
 
       {isFilterOpen && (
 
@@ -1322,6 +1708,7 @@ function Shop({ cart, setCart }) {
               bg-black/40
             "
           />
+
 
           <div
             className="
@@ -1368,9 +1755,19 @@ function Shop({ cart, setCart }) {
 
             </div>
 
+
             <div className="p-5">
 
-              <Filters />
+              <Filters
+                products={products}
+                selectedCategory={
+                  selectedCategory
+                }
+                setSelectedCategory={
+                  setSelectedCategory
+                }
+              />
+
 
               <button
                 type="button"
