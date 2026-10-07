@@ -738,7 +738,7 @@ function FeaturedProducts({ cart, setCart }) {
                 sm:text-sm
                 text-gray-500
               ">
-                {otherProducts.length} products
+                {/*{otherProducts.length} products*/}
               </span>
 
             </div>

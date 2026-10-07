@@ -41,6 +41,8 @@ function AppContent() {
     <>
       {!isAdminPage && <Navbar cart={cart} />}
 
+      <main className={!isAdminPage ? "pt-[145px]" : ""}>
+
       <Routes>
 
         {/* ================= CUSTOMER ROUTES ================= */}
@@ -159,6 +161,7 @@ function AppContent() {
         </Route>
 
       </Routes>
+      </main>
 
       {!isAdminPage && <Footer />}
     </>

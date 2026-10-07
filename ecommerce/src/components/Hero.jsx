@@ -5,7 +5,7 @@ import  heroimg from "../assets/heroimg.png";
 function Hero() {
   return (
     <section className="w-full bg-white">
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-35 sm:pt-40">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-5 sm:pt-6">
 
         {/* HERO CONTAINER */}
         <div

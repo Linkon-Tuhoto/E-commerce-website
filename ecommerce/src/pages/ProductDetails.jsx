@@ -934,7 +934,7 @@ export default function ProductDetails({ cart, setCart }) {
                   </li>
 
                   <li>
-                    • Quality checked by KIFAA
+                    • Quality checked by MAMBOGA
                   </li>
 
                 </ul>
