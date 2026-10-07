@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
 import {
   Heart,
@@ -24,7 +28,6 @@ import {
   removeFromWishlist,
 } from "../services/wishlistService";
 
-
 // ======================================================
 // AUTH TOKEN
 // ======================================================
@@ -35,7 +38,6 @@ const getToken = () => {
     localStorage.getItem("authToken")
   );
 };
-
 
 // ======================================================
 // FILTERS
@@ -55,11 +57,8 @@ function Filters({
 
   return (
     <div className="space-y-1">
-
       {/* CATEGORY */}
-
       <div className="border-b border-gray-200 pb-5">
-
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">
             Category
@@ -69,11 +68,9 @@ function Filters({
         </div>
 
         <div className="space-y-3">
-
+          {/* ALL PRODUCTS */}
           <label className="flex items-center justify-between text-sm cursor-pointer">
-
             <span className="flex items-center gap-2">
-
               <input
                 type="checkbox"
                 checked={selectedCategory === ""}
@@ -84,18 +81,15 @@ function Filters({
               />
 
               All products
-
             </span>
 
             <span className="text-xs text-gray-400">
               {products.length}
             </span>
-
           </label>
 
-
+          {/* CATEGORIES */}
           {categories.map((category) => {
-
             const count = products.filter(
               (product) =>
                 product.category === category
@@ -106,9 +100,7 @@ function Filters({
                 key={category}
                 className="flex items-center justify-between text-sm cursor-pointer"
               >
-
                 <span className="flex items-center gap-2">
-
                   <input
                     type="checkbox"
                     checked={
@@ -125,23 +117,18 @@ function Filters({
                   />
 
                   {category}
-
                 </span>
 
                 <span className="text-xs text-gray-400">
                   {count}
                 </span>
-
               </label>
             );
           })}
-
         </div>
       </div>
 
-
       {/* OTHER FILTERS */}
-
       {[
         "Gender",
         "Price range",
@@ -150,7 +137,6 @@ function Filters({
         "Rating",
         "Discount",
       ].map((filter) => (
-
         <button
           key={filter}
           type="button"
@@ -166,19 +152,14 @@ function Filters({
             font-semibold
           "
         >
-
           {filter}
 
           <Plus size={17} />
-
         </button>
-
       ))}
-
     </div>
   );
 }
-
 
 // ======================================================
 // PRODUCT CARD
@@ -190,7 +171,6 @@ function ProductCard({
   wishlistIds,
   setWishlistIds,
 }) {
-
   const navigate = useNavigate();
 
   const [selectedSize, setSelectedSize] =
@@ -235,12 +215,14 @@ function ProductCard({
   const isWishlisted =
     wishlistIds.includes(product._id);
 
-
   // ==================================================
   // COLOR CHANGE
   // ==================================================
 
   const handleColorChange = (colorName) => {
+    if (!product.colors?.length) {
+      return;
+    }
 
     const colorIndex =
       product.colors.findIndex(
@@ -254,11 +236,9 @@ function ProductCard({
     setSelectedColor(color);
 
     /*
-      For now:
-
-      Color 0 → Image 0
-      Color 1 → Image 1
-      Color 2 → Image 2
+      If the number of colors and images
+      are equal, match the color to the
+      corresponding image.
     */
 
     if (
@@ -266,23 +246,18 @@ function ProductCard({
         product.colors?.length &&
       colorIndex >= 0
     ) {
-      setSelectedImageIndex(
-        colorIndex
-      );
+      setSelectedImageIndex(colorIndex);
     }
   };
-
 
   // ==================================================
   // LOGIN CHECK
   // ==================================================
 
   const requireLogin = () => {
-
     const token = getToken();
 
     if (!token) {
-
       navigate("/signin", {
         state: {
           from: "/shop",
@@ -297,13 +272,11 @@ function ProductCard({
     return true;
   };
 
-
   // ==================================================
   // ADD TO CART
   // ==================================================
 
   const handleAddToCart = async () => {
-
     if (!isAvailable) {
       return;
     }
@@ -313,22 +286,26 @@ function ProductCard({
     }
 
     if (hasSizes && !selectedSize) {
-
       alert("Please select a size.");
-
       return;
     }
 
     if (hasColors && !selectedColor) {
-
       alert("Please select a color.");
-
       return;
     }
 
     try {
+      /*
+        IMPORTANT FIX:
+
+        The cart service needs the complete
+        product object when creating a new
+        cart item.
+      */
 
       const result = await addCartItem({
+        product: product,
 
         productId: product._id,
 
@@ -341,35 +318,26 @@ function ProductCard({
               name: selectedColor.name,
               value: selectedColor.value,
             }
-          : {},
+          : null,
+
+        selectedImage:
+          product.images?.[
+            selectedImageIndex
+          ] || "",
       });
 
-
-      /*
-        Backend returns:
-
-        {
-          message,
-          cart
-        }
-      */
-
-      if (result.cart) {
-
+      if (result?.cart) {
         setCart(
           result.cart.items || []
         );
       }
-
 
       setAdded(true);
 
       setTimeout(() => {
         setAdded(false);
       }, 1500);
-
     } catch (error) {
-
       console.error(
         "Add to cart failed:",
         error
@@ -382,14 +350,13 @@ function ProductCard({
     }
   };
 
-
   // ==================================================
   // WISHLIST
   // ==================================================
 
   const handleWishlist = async (event) => {
-
     event.preventDefault();
+    event.stopPropagation();
 
     if (wishlistLoading) {
       return;
@@ -400,39 +367,30 @@ function ProductCard({
     }
 
     try {
-
       setWishlistLoading(true);
 
       if (isWishlisted) {
-
         await removeFromWishlist(
           product._id
         );
 
-        setWishlistIds(
-          (current) =>
-            current.filter(
-              (id) =>
-                id !== product._id
-            )
+        setWishlistIds((current) =>
+          current.filter(
+            (id) =>
+              id !== product._id
+          )
         );
-
       } else {
-
         await addToWishlist(
           product._id
         );
 
-        setWishlistIds(
-          (current) => [
-            ...current,
-            product._id,
-          ]
-        );
+        setWishlistIds((current) => [
+          ...current,
+          product._id,
+        ]);
       }
-
     } catch (error) {
-
       console.error(
         "Wishlist error:",
         error
@@ -442,13 +400,10 @@ function ProductCard({
         error.message ||
           "Failed to update wishlist."
       );
-
     } finally {
-
       setWishlistLoading(false);
     }
   };
-
 
   return (
     <div
@@ -463,18 +418,15 @@ function ProductCard({
         transition
       "
     >
-
       {/* ==================================================
           IMAGE
       ================================================== */}
 
       <div className="relative">
-
         <Link
           to={`/product/${product._id}`}
           className="block"
         >
-
           <div
             className="
               relative
@@ -483,7 +435,6 @@ function ProductCard({
               overflow-hidden
             "
           >
-
             <img
               src={
                 hasImages
@@ -503,11 +454,8 @@ function ProductCard({
               "
             />
 
-
             {/* NEW */}
-
             {product.newArrival && (
-
               <span
                 className="
                   absolute
@@ -524,15 +472,11 @@ function ProductCard({
               >
                 NEW
               </span>
-
             )}
 
-
             {/* BESTSELLER */}
-
             {!product.newArrival &&
               product.bestseller && (
-
                 <span
                   className="
                     absolute
@@ -549,14 +493,10 @@ function ProductCard({
                 >
                   BESTSELLER
                 </span>
-
-            )}
-
+              )}
 
             {/* OUT OF STOCK */}
-
             {!isAvailable && (
-
               <div
                 className="
                   absolute
@@ -567,7 +507,6 @@ function ProductCard({
                   justify-center
                 "
               >
-
                 <span
                   className="
                     bg-white
@@ -580,18 +519,12 @@ function ProductCard({
                 >
                   Out of stock
                 </span>
-
               </div>
-
             )}
-
           </div>
-
         </Link>
 
-
-        {/* WISHLIST BUTTON */}
-
+        {/* WISHLIST */}
         <button
           type="button"
           onClick={handleWishlist}
@@ -612,7 +545,6 @@ function ProductCard({
             transition
           "
         >
-
           <Heart
             size={18}
             className={
@@ -621,18 +553,14 @@ function ProductCard({
                 : "text-gray-700"
             }
           />
-
         </button>
-
       </div>
-
 
       {/* ==================================================
           IMAGE THUMBNAILS
       ================================================== */}
 
       {product?.images?.length > 1 && (
-
         <div
           className="
             flex
@@ -642,10 +570,8 @@ function ProductCard({
             overflow-x-auto
           "
         >
-
           {product.images.map(
             (image, index) => (
-
               <button
                 key={index}
                 type="button"
@@ -662,7 +588,6 @@ function ProductCard({
                   overflow-hidden
                   border-2
                   transition
-
                   ${
                     selectedImageIndex ===
                     index
@@ -671,7 +596,6 @@ function ProductCard({
                   }
                 `}
               >
-
                 <img
                   src={image}
                   alt={`${product.name} ${
@@ -683,28 +607,21 @@ function ProductCard({
                     object-cover
                   "
                 />
-
               </button>
-
             )
           )}
-
         </div>
-
       )}
-
 
       {/* ==================================================
           DETAILS
       ================================================== */}
 
       <div className="p-4">
-
         <Link
           to={`/product/${product._id}`}
           className="block"
         >
-
           <p
             className="
               text-[10px]
@@ -717,16 +634,12 @@ function ProductCard({
             {product.category}
           </p>
 
-
           <h3 className="font-semibold text-sm mb-2">
             {product.name}
           </h3>
 
-
           {/* RATING */}
-
           <div className="flex items-center gap-1 text-xs mb-3">
-
             <span className="text-[#b08d1f]">
               ★
             </span>
@@ -738,20 +651,12 @@ function ProductCard({
             <span className="text-gray-400">
               ({product.reviews || 0})
             </span>
-
           </div>
-
         </Link>
 
-
-        {/* ==================================================
-            SIZE
-        ================================================== */}
-
+        {/* SIZE */}
         {hasSizes && (
-
           <div className="mb-3">
-
             <label
               className="
                 block
@@ -783,35 +688,23 @@ function ProductCard({
                 focus:border-[#D4AF37]
               "
             >
-
               {product.sizes.map(
                 (size) => (
-
                   <option
                     key={size}
                     value={size}
                   >
                     {size}
                   </option>
-
                 )
               )}
-
             </select>
-
           </div>
-
         )}
 
-
-        {/* ==================================================
-            COLOR
-        ================================================== */}
-
+        {/* COLOR */}
         {hasColors && (
-
           <div className="mb-3">
-
             <label
               className="
                 block
@@ -826,8 +719,7 @@ function ProductCard({
 
             <select
               value={
-                selectedColor?.name ||
-                ""
+                selectedColor?.name || ""
               }
               onChange={(e) =>
                 handleColorChange(
@@ -846,31 +738,21 @@ function ProductCard({
                 focus:border-[#D4AF37]
               "
             >
-
               {product.colors.map(
                 (color) => (
-
                   <option
                     key={color.name}
                     value={color.name}
                   >
                     {color.name}
                   </option>
-
                 )
               )}
-
             </select>
-
           </div>
-
         )}
 
-
-        {/* ==================================================
-            PRICE
-        ================================================== */}
-
+        {/* PRICE */}
         <div
           className="
             flex
@@ -879,7 +761,6 @@ function ProductCard({
             mb-3
           "
         >
-
           <span
             className="
               text-[#b08d1f]
@@ -893,7 +774,6 @@ function ProductCard({
           </span>
 
           {product.oldPrice && (
-
             <span
               className="
                 text-xs
@@ -906,16 +786,10 @@ function ProductCard({
                 product.oldPrice
               ).toLocaleString()}
             </span>
-
           )}
-
         </div>
 
-
-        {/* ==================================================
-            ADD TO CART
-        ================================================== */}
-
+        {/* ADD TO CART */}
         <button
           type="button"
           onClick={handleAddToCart}
@@ -938,7 +812,6 @@ function ProductCard({
             transition
           "
         >
-
           <ShoppingCart size={16} />
 
           {!isAvailable
@@ -946,22 +819,20 @@ function ProductCard({
             : added
             ? "Added to cart ✓"
             : "Add to cart"}
-
         </button>
-
       </div>
-
     </div>
   );
 }
-
 
 // ======================================================
 // SHOP PAGE
 // ======================================================
 
-function Shop({ cart, setCart }) {
-
+function Shop({
+  cart,
+  setCart,
+}) {
   const location = useLocation();
 
   const [products, setProducts] =
@@ -985,16 +856,13 @@ function Shop({ cart, setCart }) {
   const [selectedCategory, setSelectedCategory] =
     useState("");
 
-
   const productsPerPage = 8;
-
 
   // ==================================================
   // GET CATEGORY FROM URL
   // ==================================================
 
   useEffect(() => {
-
     const params =
       new URLSearchParams(
         location.search
@@ -1010,30 +878,27 @@ function Shop({ cart, setCart }) {
     }
 
     setCurrentPage(1);
-
   }, [location.search]);
-
 
   // ==================================================
   // FETCH PRODUCTS
   // ==================================================
 
   useEffect(() => {
-
     const fetchProducts = async () => {
-
       try {
-
         setLoading(true);
         setError("");
 
         const data =
           await getProducts();
 
-        setProducts(data);
-
+        setProducts(
+          Array.isArray(data)
+            ? data
+            : data?.products || []
+        );
       } catch (error) {
-
         console.error(
           "Failed to load products:",
           error
@@ -1042,28 +907,20 @@ function Shop({ cart, setCart }) {
         setError(
           "Failed to load products. Please try again."
         );
-
       } finally {
-
         setLoading(false);
-
       }
-
     };
 
     fetchProducts();
-
   }, []);
-
 
   // ==================================================
   // FETCH WISHLIST
   // ==================================================
 
   useEffect(() => {
-
     const fetchWishlist = async () => {
-
       const token = getToken();
 
       if (!token) {
@@ -1072,33 +929,26 @@ function Shop({ cart, setCart }) {
       }
 
       try {
-
         const data =
           await getMyWishlist();
 
         const ids =
-          (data.products || []).map(
+          (data?.products || []).map(
             (product) =>
               product._id
-        );
+          );
 
         setWishlistIds(ids);
-
       } catch (error) {
-
         console.error(
           "Failed to load wishlist:",
           error
         );
-
       }
-
     };
 
     fetchWishlist();
-
   }, []);
-
 
   // ==================================================
   // FILTER PRODUCTS
@@ -1113,7 +963,6 @@ function Shop({ cart, setCart }) {
         )
       : products;
 
-
   // ==================================================
   // PAGINATION
   // ==================================================
@@ -1126,11 +975,9 @@ function Shop({ cart, setCart }) {
     )
   );
 
-
   const startIndex =
     (currentPage - 1) *
     productsPerPage;
-
 
   const currentProducts =
     filteredProducts.slice(
@@ -1138,9 +985,7 @@ function Shop({ cart, setCart }) {
       startIndex + productsPerPage
     );
 
-
   const changePage = (page) => {
-
     if (
       page < 1 ||
       page > totalPages
@@ -1154,18 +999,14 @@ function Shop({ cart, setCart }) {
       top: 0,
       behavior: "smooth",
     });
-
   };
-
 
   // ==================================================
   // RENDER
   // ==================================================
 
   return (
-
     <main className="bg-white min-h-screen">
-
       {/* ==================================================
           PAGE HEADER
       ================================================== */}
@@ -1180,7 +1021,6 @@ function Shop({ cart, setCart }) {
           pb-6
         "
       >
-
         <p
           className="
             text-[#b08d1f]
@@ -1193,7 +1033,6 @@ function Shop({ cart, setCart }) {
           SHOP MAMBOGA
         </p>
 
-
         <div
           className="
             flex
@@ -1202,9 +1041,7 @@ function Shop({ cart, setCart }) {
             gap-4
           "
         >
-
           <div>
-
             <h1
               className="
                 text-3xl
@@ -1226,12 +1063,9 @@ function Shop({ cart, setCart }) {
               Browse our carefully
               selected products
             </p>
-
           </div>
 
-
           {/* SORT */}
-
           <select
             className="
               hidden
@@ -1245,7 +1079,6 @@ function Shop({ cart, setCart }) {
               outline-none
             "
           >
-
             <option>
               Recommended
             </option>
@@ -1261,14 +1094,10 @@ function Shop({ cart, setCart }) {
             <option>
               Price: High to low
             </option>
-
           </select>
-
         </div>
 
-
         {/* MOBILE CONTROLS */}
-
         <div
           className="
             flex
@@ -1277,7 +1106,6 @@ function Shop({ cart, setCart }) {
             mt-6
           "
         >
-
           <button
             type="button"
             onClick={() =>
@@ -1297,15 +1125,12 @@ function Shop({ cart, setCart }) {
               font-medium
             "
           >
-
             <SlidersHorizontal
               size={17}
             />
 
             Filters
-
           </button>
-
 
           <select
             className="
@@ -1319,7 +1144,6 @@ function Shop({ cart, setCart }) {
               outline-none
             "
           >
-
             <option>
               Recommended
             </option>
@@ -1335,13 +1159,9 @@ function Shop({ cart, setCart }) {
             <option>
               Price: High to low
             </option>
-
           </select>
-
         </div>
-
       </section>
-
 
       {/* ==================================================
           PRODUCTS
@@ -1356,12 +1176,8 @@ function Shop({ cart, setCart }) {
           pb-16
         "
       >
-
         <div className="flex gap-8">
-
-
           {/* DESKTOP FILTER */}
-
           <aside
             className="
               hidden
@@ -1370,7 +1186,6 @@ function Shop({ cart, setCart }) {
               shrink-0
             "
           >
-
             <Filters
               products={products}
               selectedCategory={
@@ -1380,14 +1195,10 @@ function Shop({ cart, setCart }) {
                 setSelectedCategory
               }
             />
-
           </aside>
 
-
           {/* PRODUCT AREA */}
-
           <div className="flex-1">
-
             <div
               className="
                 grid
@@ -1397,11 +1208,8 @@ function Shop({ cart, setCart }) {
                 sm:gap-5
               "
             >
-
               {/* LOADING */}
-
               {loading && (
-
                 <div
                   className="
                     col-span-full
@@ -1410,20 +1218,14 @@ function Shop({ cart, setCart }) {
                     py-20
                   "
                 >
-
                   <p className="text-sm text-gray-500">
                     Loading products...
                   </p>
-
                 </div>
-
               )}
 
-
               {/* ERROR */}
-
               {!loading && error && (
-
                 <div
                   className="
                     col-span-full
@@ -1432,9 +1234,7 @@ function Shop({ cart, setCart }) {
                     py-20
                   "
                 >
-
                   <div className="text-center">
-
                     <p
                       className="
                         text-sm
@@ -1462,20 +1262,15 @@ function Shop({ cart, setCart }) {
                     >
                       Try again
                     </button>
-
                   </div>
-
                 </div>
-
               )}
 
-
               {/* EMPTY */}
-
               {!loading &&
                 !error &&
-                currentProducts.length === 0 && (
-
+                currentProducts.length ===
+                  0 && (
                   <div
                     className="
                       col-span-full
@@ -1484,9 +1279,7 @@ function Shop({ cart, setCart }) {
                       py-20
                     "
                   >
-
                     <div className="text-center">
-
                       <p className="text-gray-500 text-sm">
                         No products available.
                       </p>
@@ -1502,21 +1295,15 @@ function Shop({ cart, setCart }) {
                         the admin will
                         appear here.
                       </p>
-
                     </div>
-
                   </div>
-
                 )}
 
-
               {/* PRODUCTS */}
-
               {!loading &&
                 !error &&
                 currentProducts.map(
                   (product) => (
-
                     <ProductCard
                       key={product._id}
                       product={product}
@@ -1529,12 +1316,9 @@ function Shop({ cart, setCart }) {
                         setWishlistIds
                       }
                     />
-
                   )
                 )}
-
             </div>
-
 
             {/* ==================================================
                 PAGINATION
@@ -1543,7 +1327,6 @@ function Shop({ cart, setCart }) {
             {!loading &&
               !error &&
               filteredProducts.length > 0 && (
-
                 <div
                   className="
                     mt-14
@@ -1552,7 +1335,6 @@ function Shop({ cart, setCart }) {
                     items-center
                   "
                 >
-
                   <div
                     className="
                       flex
@@ -1560,7 +1342,7 @@ function Shop({ cart, setCart }) {
                       gap-2
                     "
                   >
-
+                    {/* PREVIOUS */}
                     <button
                       type="button"
                       disabled={
@@ -1582,16 +1364,14 @@ function Shop({ cart, setCart }) {
                         disabled:opacity-30
                       "
                     >
-
                       <ChevronLeft
                         size={16}
                       />
 
                       Previous
-
                     </button>
 
-
+                    {/* PAGE NUMBERS */}
                     {Array.from(
                       {
                         length:
@@ -1600,7 +1380,6 @@ function Shop({ cart, setCart }) {
                       (_, index) =>
                         index + 1
                     ).map((page) => (
-
                       <button
                         type="button"
                         key={page}
@@ -1614,9 +1393,9 @@ function Shop({ cart, setCart }) {
                           text-sm
                           font-medium
                           transition
-
                           ${
-                            currentPage === page
+                            currentPage ===
+                            page
                               ? "bg-[#D4AF37] text-black"
                               : "border border-gray-200 hover:border-[#D4AF37]"
                           }
@@ -1624,10 +1403,9 @@ function Shop({ cart, setCart }) {
                       >
                         {page}
                       </button>
-
                     ))}
 
-
+                    {/* NEXT */}
                     <button
                       type="button"
                       disabled={
@@ -1649,17 +1427,13 @@ function Shop({ cart, setCart }) {
                         disabled:opacity-30
                       "
                     >
-
                       Next
 
                       <ChevronRight
                         size={16}
                       />
-
                     </button>
-
                   </div>
-
 
                   <p
                     className="
@@ -1671,24 +1445,17 @@ function Shop({ cart, setCart }) {
                     Page {currentPage} of{" "}
                     {totalPages}
                   </p>
-
                 </div>
-
               )}
-
           </div>
-
         </div>
-
       </section>
-
 
       {/* ==================================================
           MOBILE FILTER
       ================================================== */}
 
       {isFilterOpen && (
-
         <div
           className="
             fixed
@@ -1697,7 +1464,7 @@ function Shop({ cart, setCart }) {
             lg:hidden
           "
         >
-
+          {/* BACKDROP */}
           <div
             onClick={() =>
               setIsFilterOpen(false)
@@ -1709,7 +1476,7 @@ function Shop({ cart, setCart }) {
             "
           />
 
-
+          {/* FILTER PANEL */}
           <div
             className="
               absolute
@@ -1723,7 +1490,7 @@ function Shop({ cart, setCart }) {
               shadow-xl
             "
           >
-
+            {/* HEADER */}
             <div
               className="
                 sticky
@@ -1739,7 +1506,6 @@ function Shop({ cart, setCart }) {
                 justify-between
               "
             >
-
               <h2 className="text-lg font-semibold">
                 Filters
               </h2>
@@ -1752,12 +1518,10 @@ function Shop({ cart, setCart }) {
               >
                 <X size={21} />
               </button>
-
             </div>
 
-
+            {/* FILTERS */}
             <div className="p-5">
-
               <Filters
                 products={products}
                 selectedCategory={
@@ -1767,7 +1531,6 @@ function Shop({ cart, setCart }) {
                   setSelectedCategory
                 }
               />
-
 
               <button
                 type="button"
@@ -1787,15 +1550,10 @@ function Shop({ cart, setCart }) {
               >
                 Apply filters
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       )}
-
     </main>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Search,
   User,
@@ -7,16 +7,159 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import Cart from "../pages/Cart";
-import Wishlist from "../pages/Wishlist";
 
-function Navbar({ cart }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+import { Link, useNavigate } from "react-router-dom";
+
+function Navbar({ cart = [] }) {
+  const [isMenuOpen, setIsMenuOpen] =
+    useState(false);
+
+  const [localCartCount, setLocalCartCount] =
+    useState(0);
+
+  const navigate = useNavigate();
 
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
+
+  // ======================================================
+  // GET CART COUNT FROM LOCAL STORAGE
+  // ======================================================
+
+  const getStoredCartCount = () => {
+    try {
+      const storedCart =
+        localStorage.getItem("mamboga_cart");
+
+      if (!storedCart) {
+        return 0;
+      }
+
+      const parsedCart = JSON.parse(storedCart);
+
+      if (!Array.isArray(parsedCart)) {
+        return 0;
+      }
+
+      return parsedCart.reduce(
+        (total, item) =>
+          total + Number(item.quantity || 0),
+        0
+      );
+    } catch (error) {
+      console.error(
+        "Failed to read cart:",
+        error
+      );
+
+      return 0;
+    }
+  };
+
+  // ======================================================
+  // UPDATE CART COUNT
+  // ======================================================
+
+  useEffect(() => {
+    const updateCartCount = () => {
+      const storedCount =
+        getStoredCartCount();
+
+      const propCount = Array.isArray(cart)
+        ? cart.reduce(
+            (total, item) =>
+              total +
+              Number(item.quantity || 0),
+            0
+          )
+        : 0;
+
+      /*
+        Use the larger/current value so the
+        navbar stays synchronized with the
+        actual saved cart.
+      */
+
+      setLocalCartCount(
+        Math.max(storedCount, propCount)
+      );
+    };
+
+    updateCartCount();
+
+    // Update when another browser tab changes localStorage
+    const handleStorageChange = (event) => {
+      if (
+        event.key === "mamboga_cart"
+      ) {
+        updateCartCount();
+      }
+    };
+
+    window.addEventListener(
+      "storage",
+      handleStorageChange
+    );
+
+    /*
+      The storage event does not fire in the
+      same browser tab that changed localStorage.
+
+      This listener allows the navbar to respond
+      if another part of the application dispatches
+      a cartUpdated event.
+    */
+
+    const handleCartUpdated = () => {
+      updateCartCount();
+    };
+
+    window.addEventListener(
+      "cartUpdated",
+      handleCartUpdated
+    );
+
+    return () => {
+      window.removeEventListener(
+        "storage",
+        handleStorageChange
+      );
+
+      window.removeEventListener(
+        "cartUpdated",
+        handleCartUpdated
+      );
+    };
+  }, [cart]);
+
+  // ======================================================
+  // ALSO CHECK CART WHEN THE ROUTE CHANGES / WINDOW FOCUS
+  // ======================================================
+
+  useEffect(() => {
+    const checkCart = () => {
+      setLocalCartCount(
+        getStoredCartCount()
+      );
+    };
+
+    window.addEventListener(
+      "focus",
+      checkCart
+    );
+
+    return () => {
+      window.removeEventListener(
+        "focus",
+        checkCart
+      );
+    };
+  }, []);
+
+  // ======================================================
+  // RENDER
+  // ======================================================
 
   return (
     <header className="w-full bg-white fixed top-0 left-0 z-50 shadow-sm">
@@ -38,7 +181,6 @@ function Navbar({ cart }) {
         </div>
       </div>
 
-
       {/* ================= MAIN NAVBAR ================= */}
 
       <div className="border-b border-gray-200">
@@ -47,25 +189,22 @@ function Navbar({ cart }) {
 
           <div className="min-h-[72px] py-3 flex items-center gap-4 sm:gap-8">
 
-
             {/* ================= LOGO ================= */}
 
-            <div className="flex items-center gap-2 shrink-0">
-
+            <Link
+              to="/"
+              className="flex items-center gap-2 shrink-0"
+            >
               <div className="w-9 h-9 bg-[#D4AF37] rounded-md flex items-center justify-center">
-
                 <span className="font-bold text-lg">
                   M
                 </span>
-
               </div>
 
               <span className="text-lg sm:text-xl font-bold tracking-[0.15em]">
                 MAMBOGA
               </span>
-
-            </div>
-
+            </Link>
 
             {/* ================= DESKTOP SEARCH ================= */}
 
@@ -77,7 +216,13 @@ function Navbar({ cart }) {
 
                   <Search
                     size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                    className="
+                      absolute
+                      left-4
+                      top-1/2
+                      -translate-y-1/2
+                      text-gray-400
+                    "
                   />
 
                   <input
@@ -119,14 +264,26 @@ function Navbar({ cart }) {
 
             </div>
 
-
             {/* ================= DESKTOP ACCOUNT ================= */}
 
-            <div className="hidden md:flex items-center gap-2 shrink-0 cursor-pointer">
-
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/signin")
+              }
+              className="
+                hidden
+                md:flex
+                items-center
+                gap-2
+                shrink-0
+                cursor-pointer
+                text-left
+              "
+            >
               <User size={21} />
 
-              <Link to="/signin" className="flex flex-col">
+              <div>
 
                 <p className="text-sm font-semibold">
                   Account
@@ -136,26 +293,47 @@ function Navbar({ cart }) {
                   Sign in
                 </p>
 
-              </Link>
+              </div>
 
-            </div>
-
+            </button>
 
             {/* ================= DESKTOP WISHLIST ================= */}
 
-            <Link to="wishlist" className="hidden md:block shrink-0 cursor-pointer">
-
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/wishlist")
+              }
+              className="
+                hidden
+                md:block
+                shrink-0
+                cursor-pointer
+              "
+            >
               <Heart
                 size={22}
                 className="hover:text-[#b08d1f] transition"
               />
-
-            </Link>
-
+            </button>
 
             {/* ================= DESKTOP CART ================= */}
 
-            <Link to="cart" className="hidden md:flex items-center gap-2 shrink-0 cursor-pointer">
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/cart")
+              }
+              className="
+                hidden
+                md:flex
+                items-center
+                gap-2
+                shrink-0
+                cursor-pointer
+                text-left
+              "
+            >
 
               <ShoppingCart size={22} />
 
@@ -166,13 +344,15 @@ function Navbar({ cart }) {
                 </p>
 
                 <p className="text-xs text-gray-500">
-                  0 items
+                  {localCartCount}{" "}
+                  {localCartCount === 1
+                    ? "item"
+                    : "items"}
                 </p>
 
               </div>
 
-            </Link>
-
+            </button>
 
             {/* ================= MOBILE CART + MENU ================= */}
 
@@ -180,37 +360,50 @@ function Navbar({ cart }) {
 
               {/* MOBILE CART */}
 
-              <Link to="cart" className="relative cursor-pointer">
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/cart")
+                }
+                className="relative cursor-pointer"
+                aria-label="Open cart"
+              >
 
                 <ShoppingCart size={23} />
 
-                <span
-                  className="
-                    absolute
-                    -top-2
-                    -right-2
-                    w-4
-                    h-4
-                    rounded-full
-                    bg-[#D4AF37]
-                    text-[9px]
-                    font-bold
-                    flex
-                    items-center
-                    justify-center
-                  "
-                >
-                  0
-                </span>
+                {/* CART COUNT */}
 
-              </Link>
+                {localCartCount > 0 && (
+                  <span
+                    className="
+                      absolute
+                      -top-2
+                      -right-2
+                      min-w-4
+                      h-4
+                      px-1
+                      rounded-full
+                      bg-[#D4AF37]
+                      text-[9px]
+                      font-bold
+                      flex
+                      items-center
+                      justify-center
+                    "
+                  >
+                    {localCartCount}
+                  </span>
+                )}
 
+              </button>
 
               {/* MOBILE MENU BUTTON */}
 
               <button
                 type="button"
-                onClick={() => setIsMenuOpen(true)}
+                onClick={() =>
+                  setIsMenuOpen(true)
+                }
                 className="
                   w-10
                   h-10
@@ -223,15 +416,12 @@ function Navbar({ cart }) {
                 "
                 aria-label="Open navigation menu"
               >
-
                 <Menu size={25} />
-
               </button>
 
             </div>
 
           </div>
-
 
           {/* ================= MOBILE SEARCH ================= */}
 
@@ -243,7 +433,13 @@ function Navbar({ cart }) {
 
                 <Search
                   size={17}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="
+                    absolute
+                    left-3
+                    top-1/2
+                    -translate-y-1/2
+                    text-gray-400
+                  "
                 />
 
                 <input
@@ -288,22 +484,18 @@ function Navbar({ cart }) {
 
       </div>
 
-
-      {/* ================================================= */}
-      {/* ================= DESKTOP CATEGORY NAV ========== */}
-      {/* ================================================= */}
+      {/* =================================================
+          DESKTOP CATEGORY NAV
+      ================================================= */}
 
       <div className="hidden md:block bg-[#f5f1e6] border-b border-[#e5dfcf]">
 
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
 
           <nav className="h-12 flex items-center gap-8 text-sm">
-            <Link to="/" className="hover:text-[#a47f12] transition">
-            Home
-            </Link>
 
-            <button
-              type="button"
+            <Link
+              to="/shop"
               className="
                 flex
                 items-center
@@ -315,51 +507,45 @@ function Navbar({ cart }) {
             >
               <Menu size={18} />
               All Categories
-            </button>
+            </Link>
 
-
-            <a
-              href="#"
+            <Link
+              to="/shop?category=Clothing"
               className="hover:text-[#a47f12] transition"
             >
               Clothing
-            </a>
+            </Link>
 
-
-            <a
-              href="#"
+            <Link
+              to="/shop?category=Shoes"
               className="hover:text-[#a47f12] transition"
             >
               Shoes
-            </a>
+            </Link>
 
-
-            <a
-              href="#"
+            <Link
+              to="/shop?category=Kitchen"
               className="hover:text-[#a47f12] transition"
             >
               Kitchen
-            </a>
+            </Link>
 
-
-            <a
-              href="#"
+            <Link
+              to="/shop?category=Household"
               className="hover:text-[#a47f12] transition"
             >
               Household
-            </a>
+            </Link>
 
-
-            <a
-              href="#"
+            <Link
+              to="/shop?newArrival=true"
               className="hover:text-[#a47f12] transition"
             >
               New Arrivals
-            </a>
+            </Link>
 
-
-            <a
-              href="#"
+            <Link
+              to="/shop?featured=true"
               className="
                 ml-auto
                 text-[#a47f12]
@@ -369,7 +555,7 @@ function Navbar({ cart }) {
               "
             >
               Today's Deals
-            </a>
+            </Link>
 
           </nav>
 
@@ -377,12 +563,9 @@ function Navbar({ cart }) {
 
       </div>
 
-
-      {/* ================================================= */}
-      {/* ================= MOBILE MENU ==================== */}
-      {/* ================================================= */}
-
-      {/* DARK OVERLAY */}
+      {/* =================================================
+          MOBILE MENU OVERLAY
+      ================================================= */}
 
       <div
         className={`
@@ -402,8 +585,9 @@ function Navbar({ cart }) {
         onClick={closeMenu}
       />
 
-
-      {/* RIGHT SIDE DRAWER */}
+      {/* =================================================
+          MOBILE DRAWER
+      ================================================= */}
 
       <aside
         className={`
@@ -429,32 +613,31 @@ function Navbar({ cart }) {
         `}
       >
 
-        {/* ================= DRAWER HEADER ================= */}
+        {/* DRAWER HEADER */}
 
         <div className="bg-white border-b border-[#e5dfcf]">
 
           <div className="px-4 py-4 flex items-center justify-between">
 
-            {/* LOGO */}
+            <Link
+              to="/"
+              onClick={closeMenu}
+              className="flex items-center gap-2"
+            >
 
-            <div className="flex items-center gap-2">
-
-              <div className="w-9 h-9  rounded-md flex items-center justify-center">
+              <div className="w-9 h-9 bg-[#D4AF37] rounded-md flex items-center justify-center">
 
                 <span className="font-bold text-lg">
-                  
+                  M
                 </span>
 
               </div>
 
               <span className="text-lg font-bold tracking-[0.15em]">
-                
+                MAMBOGA
               </span>
 
-            </div>
-
-
-            {/* CLOSE BUTTON */}
+            </Link>
 
             <button
               type="button"
@@ -478,16 +661,18 @@ function Navbar({ cart }) {
 
         </div>
 
-
-        {/* ================= MENU LINKS ================= */}
+        {/* MENU LINKS */}
 
         <nav className="px-4 py-3 flex flex-col">
 
           {/* ACCOUNT */}
 
-          <Link
-            to="/signin"
-            onClick={closeMenu}
+          <button
+            type="button"
+            onClick={() => {
+              closeMenu();
+              navigate("/signin");
+            }}
             className="
               flex
               items-center
@@ -498,6 +683,7 @@ function Navbar({ cart }) {
               font-medium
               hover:text-[#b08d1f]
               transition
+              text-left
             "
           >
 
@@ -515,14 +701,16 @@ function Navbar({ cart }) {
 
             </div>
 
-          </Link>
+          </button>
 
+          {/* WISHLIST */}
 
-          {/* WISH LIST */}
-
-          <Link
-            to="/wishlist"
-            onClick={closeMenu}
+          <button
+            type="button"
+            onClick={() => {
+              closeMenu();
+              navigate("/wishlist");
+            }}
             className="
               flex
               items-center
@@ -533,6 +721,7 @@ function Navbar({ cart }) {
               font-medium
               hover:text-[#b08d1f]
               transition
+              text-left
             "
           >
 
@@ -550,17 +739,76 @@ function Navbar({ cart }) {
 
             </div>
 
-          </Link>
+          </button>
 
-          <Link to="/" onClick={closeMenu} className="gap-3 py-4 border-b border-[#e5dfcf] hover:text-[#a47f12] transition">
-          Home
-          </Link>
+          {/* CART */}
 
+          <button
+            type="button"
+            onClick={() => {
+              closeMenu();
+              navigate("/cart");
+            }}
+            className="
+              flex
+              items-center
+              justify-between
+              py-4
+              border-b
+              border-[#e5dfcf]
+              font-medium
+              hover:text-[#b08d1f]
+              transition
+              text-left
+            "
+          >
+
+            <span className="flex items-center gap-3">
+
+              <ShoppingCart size={20} />
+
+              <div>
+
+                <p className="font-semibold">
+                  Cart
+                </p>
+
+                <p className="text-xs text-gray-500">
+                  {localCartCount}{" "}
+                  {localCartCount === 1
+                    ? "item"
+                    : "items"}
+                </p>
+
+              </div>
+
+            </span>
+
+            {localCartCount > 0 && (
+              <span
+                className="
+                  min-w-6
+                  h-6
+                  px-2
+                  rounded-full
+                  bg-[#D4AF37]
+                  text-xs
+                  font-bold
+                  flex
+                  items-center
+                  justify-center
+                "
+              >
+                {localCartCount}
+              </span>
+            )}
+
+          </button>
 
           {/* ALL CATEGORIES */}
 
-          <a
-            href="/shop"
+          <Link
+            to="/shop"
             onClick={closeMenu}
             className="
               flex
@@ -574,18 +822,14 @@ function Navbar({ cart }) {
               transition
             "
           >
-
             <Menu size={18} />
-
             All Categories
-
-          </a>
-
+          </Link>
 
           {/* CLOTHING */}
 
-          <a
-            href="/shop?category=Clothing"
+          <Link
+            to="/shop?category=Clothing"
             onClick={closeMenu}
             className="
               py-3
@@ -596,13 +840,12 @@ function Navbar({ cart }) {
             "
           >
             Clothing
-          </a>
-
+          </Link>
 
           {/* SHOES */}
 
-          <a
-            href="/shop?category=Shoes"
+          <Link
+            to="/shop?category=Shoes"
             onClick={closeMenu}
             className="
               py-3
@@ -613,13 +856,12 @@ function Navbar({ cart }) {
             "
           >
             Shoes
-          </a>
-
+          </Link>
 
           {/* KITCHEN */}
 
-          <a
-            href="/shop?category=Kitchen"
+          <Link
+            to="/shop?category=Kitchen"
             onClick={closeMenu}
             className="
               py-3
@@ -630,13 +872,12 @@ function Navbar({ cart }) {
             "
           >
             Kitchen
-          </a>
-
+          </Link>
 
           {/* HOUSEHOLD */}
 
-          <a
-            href="/shop?category=Household"
+          <Link
+            to="/shop?category=Household"
             onClick={closeMenu}
             className="
               py-3
@@ -647,13 +888,12 @@ function Navbar({ cart }) {
             "
           >
             Household
-          </a>
-
+          </Link>
 
           {/* NEW ARRIVALS */}
 
-          <a
-            href="#"
+          <Link
+            to="/shop?newArrival=true"
             onClick={closeMenu}
             className="
               py-3
@@ -664,13 +904,12 @@ function Navbar({ cart }) {
             "
           >
             New Arrivals
-          </a>
-
+          </Link>
 
           {/* TODAY'S DEALS */}
 
-          <a
-            href="#"
+          <Link
+            to="/shop?featured=true"
             onClick={closeMenu}
             className="
               py-3
@@ -681,12 +920,11 @@ function Navbar({ cart }) {
             "
           >
             Today's Deals
-          </a>
+          </Link>
 
         </nav>
 
       </aside>
-
 
       {/* FINAL SEPARATOR */}
 

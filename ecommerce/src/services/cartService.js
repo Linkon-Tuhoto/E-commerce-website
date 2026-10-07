@@ -1,141 +1,255 @@
-import API_URL from "./api";
+const CART_KEY = "mamboga_cart";
 
-const CART_URL = `${API_URL}/api/cart`;
+// ===============================
+// GET CART
+// ===============================
 
-const getToken = () => {
-  return (
-    localStorage.getItem("token") ||
-    localStorage.getItem("authToken")
-  );
+export const getCart = () => {
+  try {
+    const storedCart =
+      localStorage.getItem(CART_KEY);
+
+    if (!storedCart) {
+      return [];
+    }
+
+    return JSON.parse(storedCart);
+  } catch (error) {
+    console.error(
+      "Failed to load cart:",
+      error
+    );
+
+    return [];
+  }
 };
 
-// GET MY CART
-export const getMyCart = async () => {
-  const token = getToken();
 
-  const response = await fetch(CART_URL, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+// ===============================
+// SAVE CART
+// ===============================
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    throw new Error(
-      errorData.message || "Failed to fetch cart"
+export const saveCart = (cart) => {
+  try {
+    localStorage.setItem(
+      CART_KEY,
+      JSON.stringify(cart)
+    );
+  } catch (error) {
+    console.error(
+      "Failed to save cart:",
+      error
     );
   }
-
-  return response.json();
 };
 
+
+// ===============================
 // ADD TO CART
-export const addToCart = async ({
+// ===============================
+
+export const addToCart = ({
+  product,
   productId,
   quantity = 1,
   size = "",
-  color = {},
+  color = null,
+  selectedImage = "",
 }) => {
-  const token = getToken();
 
-  const response = await fetch(CART_URL, {
-    method: "POST",
+  const currentCart = getCart();
 
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+  const actualProductId =
+    productId ||
+    product?._id ||
+    product?.id;
 
-    body: JSON.stringify({
-      productId,
-      quantity,
-      size,
-      color,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
+  if (!actualProductId) {
     throw new Error(
-      errorData.message || "Failed to add product to cart"
+      "Product ID is required."
     );
   }
 
-  return response.json();
+  const cartItemId = [
+    actualProductId,
+    size || "",
+    color?.name || "",
+  ].join("-");
+
+  const existingItem =
+    currentCart.find(
+      (item) =>
+        item.cartItemId === cartItemId
+    );
+
+  let updatedCart;
+
+  if (existingItem) {
+
+    updatedCart = currentCart.map(
+      (item) =>
+        item.cartItemId === cartItemId
+          ? {
+              ...item,
+              quantity:
+                Number(item.quantity || 0) +
+                Number(quantity || 1),
+            }
+          : item
+    );
+
+  } else {
+
+    if (!product) {
+      throw new Error(
+        "Product information is required when adding a new item."
+      );
+    }
+
+    const newItem = {
+      cartItemId,
+
+      productId: actualProductId,
+
+      name: product.name,
+
+      price: Number(product.price || 0),
+
+      oldPrice:
+        product.oldPrice || null,
+
+      category:
+        product.category || "",
+
+      images:
+        product.images || [],
+
+      image:
+        selectedImage ||
+        product.images?.[0] ||
+        "",
+
+      selectedImage:
+        selectedImage ||
+        product.images?.[0] ||
+        "",
+
+      selectedSize: size || "",
+
+      selectedColor: color || null,
+
+      quantity:
+        Number(quantity || 1),
+    };
+
+    updatedCart = [
+      ...currentCart,
+      newItem,
+    ];
+  }
+
+  saveCart(updatedCart);
+
+  return {
+    message: "Product added to cart",
+    cart: {
+      items: updatedCart,
+    },
+  };
 };
 
+
+// ===============================
 // UPDATE CART ITEM
-export const updateCartItem = async (itemId, quantity) => {
-  const token = getToken();
+// ===============================
 
-  const response = await fetch(`${CART_URL}/${itemId}`, {
-    method: "PUT",
+export const updateCartItem = (
+  cartItemId,
+  quantity
+) => {
 
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+  const currentCart = getCart();
 
-    body: JSON.stringify({
-      quantity,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    throw new Error(
-      errorData.message || "Failed to update cart"
+  const updatedCart =
+    currentCart.map((item) =>
+      item.cartItemId === cartItemId
+        ? {
+            ...item,
+            quantity: Math.max(
+              1,
+              Number(quantity)
+            ),
+          }
+        : item
     );
-  }
 
-  return response.json();
+  saveCart(updatedCart);
+
+  return {
+    message: "Cart updated",
+    cart: {
+      items: updatedCart,
+    },
+  };
 };
 
+
+// ===============================
 // REMOVE CART ITEM
-export const removeFromCart = async (itemId) => {
-  const token = getToken();
+// ===============================
 
-  const response = await fetch(`${CART_URL}/${itemId}`, {
-    method: "DELETE",
+export const removeFromCart = (
+  cartItemId
+) => {
 
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const currentCart = getCart();
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    throw new Error(
-      errorData.message || "Failed to remove cart item"
+  const updatedCart =
+    currentCart.filter(
+      (item) =>
+        item.cartItemId !== cartItemId
     );
-  }
 
-  return response.json();
+  saveCart(updatedCart);
+
+  return {
+    message: "Item removed",
+    cart: {
+      items: updatedCart,
+    },
+  };
 };
 
+
+// ===============================
 // CLEAR CART
-export const clearCart = async () => {
-  const token = getToken();
+// ===============================
 
-  const response = await fetch(CART_URL, {
-    method: "DELETE",
+export const clearCart = () => {
 
-    headers: {
-      Authorization: `Bearer ${token}`,
+  localStorage.removeItem(CART_KEY);
+
+  return {
+    message: "Cart cleared",
+    cart: {
+      items: [],
     },
-  });
+  };
+};
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
 
-    throw new Error(
-      errorData.message || "Failed to clear cart"
-    );
-  }
+// ===============================
+// GET CART COUNT
+// ===============================
 
-  return response.json();
+export const getCartCount = () => {
+
+  const cart = getCart();
+
+  return cart.reduce(
+    (total, item) =>
+      total +
+      Number(item.quantity || 0),
+    0
+  );
 };

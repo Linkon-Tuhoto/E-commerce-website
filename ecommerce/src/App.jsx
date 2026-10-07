@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import Home from "./pages/Home";
 import Shop from "./components/Shop";
@@ -13,6 +13,8 @@ import Register from "./pages/Register";
 
 import { AuthProvider } from "./context/AuthContext";
 
+import { getCart, saveCart } from "./services/cartService";
+
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminLayout from "./pages/admin/adminLayout";
 import AdminProductForm from "./pages/admin/AdminProductForm";
@@ -20,12 +22,19 @@ import AdminOrders from "./pages/admin/AdminOrders";
 
 
 function AppContent() {
-  const [cart, setCart] = useState([]);
+  // Load cart from localStorage when the application starts
+  const [cart, setCart] = useState(() => getCart());
+
   const [wishlist, setWishlist] = useState([]);
 
   const location = useLocation();
 
   const isAdminPage = location.pathname.startsWith("/admin");
+
+  // Keep localStorage synchronized with React cart state
+  useEffect(() => {
+    saveCart(cart);
+  }, [cart]);
 
   return (
     <>
@@ -33,7 +42,8 @@ function AppContent() {
 
       <Routes>
 
-        {/* Customer routes */}
+        {/* ================= CUSTOMER ROUTES ================= */}
+
         <Route
           path="/"
           element={
@@ -96,7 +106,8 @@ function AppContent() {
         />
 
 
-        {/* Admin routes */}
+        {/* ================= ADMIN ROUTES ================= */}
+
         <Route path="/admin" element={<AdminLayout />}>
 
           <Route
