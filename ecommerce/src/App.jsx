@@ -22,6 +22,7 @@ import AdminLayout from "./pages/admin/adminLayout";
 import AdminProductForm from "./pages/admin/AdminProductForm";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminUsers from "./pages/admin/AdminUsers";
+import OrderDetails from "./pages/admin/OrderDetails";
 
 
 function AppContent() {
@@ -174,6 +175,11 @@ function AppContent() {
             path="users"
             element={<AdminUsers />}
           />
+
+        <Route
+        path="orders/:id"
+        element={<OrderDetails />}
+        />
 
         </Route>
 
