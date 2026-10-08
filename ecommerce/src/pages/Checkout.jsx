@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import {
   ArrowLeft,
   CheckCircle2,
@@ -12,30 +11,25 @@ import {
 } from "lucide-react";
 
 import { getCart } from "../services/cartService";
-
-const API_URL = import.meta.env.VITE_API_URL;
-
-// =====================================================
-// GET AUTH TOKEN
-// =====================================================
+import {
+  createOrder,
+  initiateProductPayment,
+} from "../services/orderService";
 
 const getToken = () => {
   return (
     localStorage.getItem("token") ||
-    localStorage.getItem("authToken")
+    localStorage.getItem("authToken") ||
+    localStorage.getItem("surveyToken")
   );
 };
-
-// =====================================================
-// CHECKOUT
-// =====================================================
 
 function Checkout({ cart = [], setCart }) {
   const navigate = useNavigate();
 
-  // ===================================================
+  // =====================================================
   // STATE
-  // ===================================================
+  // =====================================================
 
   const [user, setUser] = useState(null);
 
@@ -47,20 +41,15 @@ function Checkout({ cart = [], setCart }) {
     directions: "",
   });
 
-  const [paymentMethod, setPaymentMethod] =
-    useState("M-PESA");
-
-  // This is the number that will actually receive
-  // the M-PESA STK prompt.
   const [paymentPhone, setPaymentPhone] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // ===================================================
+  // =====================================================
   // AUTHENTICATION
-  // ===================================================
+  // =====================================================
 
   useEffect(() => {
     const token = getToken();
@@ -69,8 +58,7 @@ function Checkout({ cart = [], setCart }) {
       navigate("/signin", {
         state: {
           from: "/checkout",
-          message:
-            "Please sign in to continue with your order.",
+          message: "Please sign in to continue with your order.",
         },
       });
 
@@ -90,9 +78,9 @@ function Checkout({ cart = [], setCart }) {
     }
   }, [navigate]);
 
-  // ===================================================
+  // =====================================================
   // CART
-  // ===================================================
+  // =====================================================
 
   const currentCart = useMemo(() => {
     if (cart?.length > 0) {
@@ -102,32 +90,40 @@ function Checkout({ cart = [], setCart }) {
     return getCart();
   }, [cart]);
 
-  // ===================================================
+  // =====================================================
   // CART TOTALS
-  // ===================================================
+  // =====================================================
 
   const itemCount = currentCart.reduce(
-    (total, item) =>
-      total + Number(item.quantity || 0),
+    (total, item) => total + Number(item.quantity || 0),
     0
   );
 
   const subtotal = currentCart.reduce(
     (total, item) =>
       total +
-      Number(item.price || 0) *
-        Number(item.quantity || 0),
+      Number(item.price || 0) * Number(item.quantity || 0),
     0
   );
 
-  // Same delivery rule used by the cart.
-  const deliveryFee = subtotal >= 5000 ? 0 : 300;
+  /*
+   * IMPORTANT
+   *
+   * Delivery fee is NOT calculated here.
+   *
+   * The backend creates the order with deliveryFee = 0.
+   * If delivery requires payment, the admin can later set
+   * the transport/delivery fee from the admin dashboard.
+   *
+   * Therefore, the first payment is ONLY for the products.
+   */
+  const deliveryFee = 0;
 
   const total = subtotal + deliveryFee;
 
-  // ===================================================
+  // =====================================================
   // FORM HANDLING
-  // ===================================================
+  // =====================================================
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -138,9 +134,9 @@ function Checkout({ cart = [], setCart }) {
     }));
   };
 
-  // ===================================================
+  // =====================================================
   // PLACE ORDER
-  // ===================================================
+  // =====================================================
 
   const handlePlaceOrder = async (event) => {
     event.preventDefault();
@@ -150,46 +146,33 @@ function Checkout({ cart = [], setCart }) {
 
     const token = getToken();
 
-    // -----------------------------------------------
+    // -----------------------------------------------------
     // CHECK LOGIN
-    // -----------------------------------------------
+    // -----------------------------------------------------
 
     if (!token) {
       navigate("/signin", {
         state: {
           from: "/checkout",
-          message:
-            "Please sign in before placing your order.",
+          message: "Please sign in before placing your order.",
         },
       });
 
       return;
     }
 
-    // -----------------------------------------------
-    // CHECK API URL
-    // -----------------------------------------------
-
-    if (!API_URL) {
-      setError(
-        "Backend URL is not configured. Please check your VITE_API_URL."
-      );
-
-      return;
-    }
-
-    // -----------------------------------------------
+    // -----------------------------------------------------
     // CHECK CART
-    // -----------------------------------------------
+    // -----------------------------------------------------
 
     if (currentCart.length === 0) {
       setError("Your cart is empty.");
       return;
     }
 
-    // -----------------------------------------------
+    // -----------------------------------------------------
     // CHECK DELIVERY DETAILS
-    // -----------------------------------------------
+    // -----------------------------------------------------
 
     if (!form.county.trim()) {
       setError("Please enter your county.");
@@ -206,9 +189,9 @@ function Checkout({ cart = [], setCart }) {
       return;
     }
 
-    // -----------------------------------------------
+    // -----------------------------------------------------
     // CHECK PAYMENT PHONE
-    // -----------------------------------------------
+    // -----------------------------------------------------
 
     if (!paymentPhone.trim()) {
       setError("Please enter the M-PESA phone number.");
@@ -218,192 +201,93 @@ function Checkout({ cart = [], setCart }) {
     try {
       setLoading(true);
 
-      // =================================================
+      // ===================================================
       // STEP 1: PREPARE ORDER ITEMS
-      // =================================================
+      // ===================================================
 
       const orderItems = currentCart.map((item) => ({
         product: item.productId,
-
         quantity: Number(item.quantity || 1),
-
         size: item.selectedSize || "",
-
         color:
           typeof item.selectedColor === "object"
             ? item.selectedColor?.name || ""
             : item.selectedColor || "",
       }));
 
-      // =================================================
+      // ===================================================
       // STEP 2: CREATE ORDER
-      // =================================================
+      // ===================================================
 
-      const orderResponse = await fetch(
-        `${API_URL}/api/orders`,
-        {
-          method: "POST",
+      const orderData = await createOrder({
+        items: orderItems,
 
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+        deliveryAddress: {
+          county: form.county.trim(),
+          town: form.town.trim(),
+          area: form.area.trim(),
+          building: form.building.trim(),
+          directions: form.directions.trim(),
+        },
+      });
 
-          body: JSON.stringify({
-            items: orderItems,
-
-            deliveryAddress: {
-              county: form.county.trim(),
-              town: form.town.trim(),
-              area: form.area.trim(),
-              building: form.building.trim(),
-              directions: form.directions.trim(),
-            },
-
-            paymentMethod,
-          }),
-        }
-      );
-
-      // -----------------------------------------------
-      // READ ORDER RESPONSE SAFELY
-      // -----------------------------------------------
-
-      const orderContentType =
-        orderResponse.headers.get("content-type") || "";
-
-      let orderData;
-
-      if (
-        orderContentType.includes("application/json")
-      ) {
-        orderData = await orderResponse.json();
-      } else {
-        const responseText =
-          await orderResponse.text();
-
-        console.error(
-          "Order API returned non-JSON:",
-          responseText
-        );
-
-        throw new Error(
-          "The server returned an unexpected response. Please check your backend URL and order route."
-        );
-      }
-
-      // -----------------------------------------------
-      // CHECK ORDER RESPONSE
-      // -----------------------------------------------
-
-      if (!orderResponse.ok) {
-        throw new Error(
-          orderData.message ||
-            "Unable to create your order."
-        );
-      }
-
-      if (!orderData.order?._id) {
+      if (!orderData?.order?._id) {
         throw new Error(
           "Order was created but no order ID was returned."
         );
       }
 
-      console.log(
-        "Order created:",
-        orderData.order
+      const createdOrder = orderData.order;
+
+      console.log("Order created:", createdOrder);
+
+      // ===================================================
+      // STEP 3: START PRODUCT PAYMENT
+      // ===================================================
+
+      const paymentData = await initiateProductPayment(
+        createdOrder._id,
+        paymentPhone.trim()
       );
 
-      // =================================================
-      // STEP 3: SEND INTASEND M-PESA STK PUSH
-      // =================================================
+      console.log("IntaSend payment response:", paymentData);
 
-      const paymentResponse = await fetch(
-        `${API_URL}/api/orders/${orderData.order._id}/pay`,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-
-          // IMPORTANT:
-          // Use the number entered at checkout,
-          // NOT the logged-in account phone.
-          body: JSON.stringify({
-            phoneNumber: paymentPhone.trim(),
-          }),
-        }
-      );
-
-      // -----------------------------------------------
-      // READ PAYMENT RESPONSE SAFELY
-      // -----------------------------------------------
-
-      const paymentContentType =
-        paymentResponse.headers.get("content-type") ||
-        "";
-
-      let paymentData;
-
-      if (
-        paymentContentType.includes("application/json")
-      ) {
-        paymentData = await paymentResponse.json();
-      } else {
-        const responseText =
-          await paymentResponse.text();
-
-        console.error(
-          "Payment API returned non-JSON:",
-          responseText
-        );
-
-        throw new Error(
-          "The payment server returned an unexpected response. Please check your backend."
-        );
-      }
-
-      // -----------------------------------------------
-      // CHECK PAYMENT RESPONSE
-      // -----------------------------------------------
-
-      if (!paymentResponse.ok) {
-        throw new Error(
-          paymentData.message ||
-            "Unable to start M-PESA payment."
-        );
-      }
-
-      // =================================================
-      // SUCCESS
-      // =================================================
+      // ===================================================
+      // STEP 4: SUCCESS
+      // ===================================================
 
       setSuccess(
         `M-PESA payment prompt sent! Check ${paymentPhone.trim()} and enter your M-PESA PIN to pay KSh ${Number(
-          orderData.order.totalAmount
+          createdOrder.subtotal || subtotal
         ).toLocaleString()}.`
-      );
-
-      console.log(
-        "IntaSend payment response:",
-        paymentData
       );
 
       /*
        * IMPORTANT:
        *
-       * DO NOT CLEAR THE CART HERE.
+       * Do NOT clear the cart here.
        *
        * The STK prompt has only been sent.
        *
-       * Later, when IntaSend confirms the payment,
-       * we will:
+       * IntaSend will later confirm the payment through
+       * the backend webhook.
        *
-       * 1. Mark the order as PAID
-       * 2. Update the order status
-       * 3. Clear the customer's cart
+       * The backend will then mark:
+       *
+       * productPaymentStatus = PAID
+       *
+       * Transport payment is handled separately if the
+       * admin later adds a delivery fee.
+       */
+
+      /*
+       * We deliberately do not call:
+       *
+       * setCart([])
+       *
+       * or clearCart()
+       *
+       * at this point.
        */
     } catch (err) {
       console.error("Checkout error:", err);
@@ -417,9 +301,9 @@ function Checkout({ cart = [], setCart }) {
     }
   };
 
-  // ===================================================
+  // =====================================================
   // EMPTY CART
-  // ===================================================
+  // =====================================================
 
   if (currentCart.length === 0) {
     return (
@@ -435,8 +319,7 @@ function Checkout({ cart = [], setCart }) {
           </h1>
 
           <p className="text-gray-500 mb-6">
-            Add some products before proceeding to
-            checkout.
+            Add some products before proceeding to checkout.
           </p>
 
           <Link
@@ -450,9 +333,9 @@ function Checkout({ cart = [], setCart }) {
     );
   }
 
-  // ===================================================
+  // =====================================================
   // PAGE
-  // ===================================================
+  // =====================================================
 
   return (
     <div className="min-h-screen bg-[#f8f7f3] pt-28 pb-20 px-4">
@@ -474,20 +357,25 @@ function Checkout({ cart = [], setCart }) {
           </h1>
 
           <p className="text-gray-500 mt-2">
-            Enter your delivery details and complete
-            your payment.
+            Enter your delivery details and pay for your products.
           </p>
         </div>
 
         {/* SUCCESS */}
 
         {success && (
-          <div className="mb-6 flex items-center gap-3 bg-green-50 border border-green-200 text-green-700 rounded-xl p-4">
-            <CheckCircle2 size={22} />
+          <div className="mb-6 flex items-start gap-3 bg-green-50 border border-green-200 text-green-700 rounded-xl p-4">
+            <CheckCircle2 size={22} className="shrink-0 mt-0.5" />
 
-            <p className="font-medium">
-              {success}
-            </p>
+            <div>
+              <p className="font-medium">{success}</p>
+
+              <p className="text-sm mt-1">
+                Your payment is being processed. Your order will
+                be updated automatically after IntaSend confirms
+                the payment.
+              </p>
+            </div>
           </div>
         )}
 
@@ -504,7 +392,9 @@ function Checkout({ cart = [], setCart }) {
         <form onSubmit={handlePlaceOrder}>
           <div className="grid lg:grid-cols-3 gap-8">
 
-            {/* LEFT */}
+            {/* =================================================
+                LEFT
+            ================================================= */}
 
             <div className="lg:col-span-2 space-y-6">
 
@@ -683,6 +573,7 @@ function Checkout({ cart = [], setCart }) {
                       className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:border-[#D4AF37] resize-none"
                     />
                   </div>
+
                 </div>
 
                 <div className="mt-5 bg-[#faf8ef] border border-[#eadca8] rounded-lg p-4 text-sm text-gray-700">
@@ -693,9 +584,8 @@ function Checkout({ cart = [], setCart }) {
                     />
 
                     <p>
-                      Please provide accurate delivery
-                      information so our team can locate
-                      you easily.
+                      Please provide accurate delivery information
+                      so our team can locate you easily.
                     </p>
                   </div>
                 </div>
@@ -711,11 +601,11 @@ function Checkout({ cart = [], setCart }) {
 
                   <div>
                     <h2 className="text-lg font-bold">
-                      Payment Method
+                      Product Payment
                     </h2>
 
                     <p className="text-sm text-gray-500">
-                      Select how you want to pay
+                      Pay for your products using M-PESA
                     </p>
                   </div>
                 </div>
@@ -741,45 +631,33 @@ function Checkout({ cart = [], setCart }) {
                   />
 
                   <p className="text-xs text-gray-500 mt-2">
-                    Enter the number that should receive
-                    the M-PESA payment prompt. It can be
-                    different from your account phone
-                    number.
+                    Enter the number that should receive the
+                    M-PESA payment prompt. It can be different
+                    from your account phone number.
                   </p>
                 </div>
 
                 {/* M-PESA */}
 
-                <label className="flex items-center gap-4 border-2 border-[#D4AF37] bg-[#faf8ef] rounded-xl p-4 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="M-PESA"
-                    checked={
-                      paymentMethod === "M-PESA"
-                    }
-                    onChange={(event) =>
-                      setPaymentMethod(
-                        event.target.value
-                      )
-                    }
-                    className="accent-[#D4AF37]"
-                  />
+                <div className="border-2 border-[#D4AF37] bg-[#faf8ef] rounded-xl p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-5 h-5 rounded-full border-4 border-[#D4AF37]" />
 
-                  <div className="flex-1">
-                    <p className="font-bold">
+                    <div className="flex-1">
+                      <p className="font-bold">
+                        M-PESA
+                      </p>
+
+                      <p className="text-sm text-gray-500">
+                        Pay securely using an M-PESA STK prompt
+                      </p>
+                    </div>
+
+                    <span className="font-bold text-green-600">
                       M-PESA
-                    </p>
-
-                    <p className="text-sm text-gray-500">
-                      Pay securely using M-PESA
-                    </p>
+                    </span>
                   </div>
-
-                  <span className="font-bold text-green-600">
-                    M-PESA
-                  </span>
-                </label>
+                </div>
 
                 <div className="mt-4 flex gap-3 text-sm text-gray-500">
                   <ShieldCheck
@@ -788,16 +666,18 @@ function Checkout({ cart = [], setCart }) {
                   />
 
                   <p>
-                    You will receive an M-PESA payment
-                    prompt on the number you enter above.
-                    Enter your M-PESA PIN to complete the
-                    payment securely.
+                    You will receive an M-PESA payment prompt on
+                    the number you enter above. Enter your M-PESA
+                    PIN to complete the product payment securely.
                   </p>
                 </div>
               </section>
+
             </div>
 
-            {/* RIGHT — ORDER SUMMARY */}
+            {/* =================================================
+                RIGHT — ORDER SUMMARY
+            ================================================= */}
 
             <div>
               <div className="bg-white border border-gray-200 rounded-2xl p-6 lg:sticky lg:top-28">
@@ -810,12 +690,12 @@ function Checkout({ cart = [], setCart }) {
 
                 <div className="space-y-4 max-h-[360px] overflow-y-auto pr-1">
                   {currentCart.map((item) => {
-                    const quantity =
-                      Number(item.quantity || 1);
+                    const quantity = Number(
+                      item.quantity || 1
+                    );
 
                     const itemTotal =
-                      Number(item.price || 0) *
-                      quantity;
+                      Number(item.price || 0) * quantity;
 
                     return (
                       <div
@@ -866,8 +746,7 @@ function Checkout({ cart = [], setCart }) {
                         </div>
 
                         <p className="font-semibold text-sm">
-                          KSh{" "}
-                          {itemTotal.toLocaleString()}
+                          KSh {itemTotal.toLocaleString()}
                         </p>
                       </div>
                     );
@@ -888,7 +767,7 @@ function Checkout({ cart = [], setCart }) {
 
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">
-                      Subtotal
+                      Product subtotal
                     </span>
 
                     <span>
@@ -901,22 +780,27 @@ function Checkout({ cart = [], setCart }) {
                       Delivery
                     </span>
 
-                    <span>
-                      {deliveryFee === 0
-                        ? "FREE"
-                        : `KSh ${deliveryFee.toLocaleString()}`}
+                    <span className="text-green-600">
+                      Not charged yet
                     </span>
                   </div>
 
+                  <p className="text-xs text-gray-500">
+                    Delivery/transport charges, if applicable,
+                    will be set separately after the order is
+                    reviewed.
+                  </p>
+
                   <div className="border-t border-gray-200 pt-4 flex justify-between">
                     <span className="font-bold text-lg">
-                      Total
+                      Pay Now
                     </span>
 
                     <span className="font-bold text-xl">
                       KSh {total.toLocaleString()}
                     </span>
                   </div>
+
                 </div>
 
                 {/* BUTTON */}
@@ -935,8 +819,10 @@ function Checkout({ cart = [], setCart }) {
                   <ShieldCheck size={15} />
                   Secure checkout
                 </div>
+
               </div>
             </div>
+
           </div>
         </form>
       </div>
