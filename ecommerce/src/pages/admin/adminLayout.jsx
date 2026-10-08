@@ -42,6 +42,14 @@ function AdminLayout() {
           </Link>
 
           <Link
+            to="/admin/users"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition"
+          >
+            <Users size={18} />
+            Users
+          </Link>
+
+          <Link
             to="/admin/orders"
             className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition"
           >
