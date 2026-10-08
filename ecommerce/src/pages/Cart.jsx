@@ -421,13 +421,12 @@ function Cart({ cart = [], setCart }) {
 
 
               {/* CHECKOUT */}
-              <button
-                type="button"
-                onClick={handleCheckout}
+              <Link
+                to="/checkout"
                 className="mt-6 flex w-full items-center justify-center rounded-lg bg-[#D4AF37] py-3.5 text-sm font-semibold text-black transition hover:bg-[#c19d25]"
               >
                 Proceed to Checkout
-              </button>
+              </Link>
 
 
               {/* SECURITY */}

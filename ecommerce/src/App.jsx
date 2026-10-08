@@ -11,6 +11,7 @@ import Wishlist from "./pages/Wishlist";
 import SignIn from "./pages/SignIn";
 import Register from "./pages/Register";
 import FeaturedProducts from "./pages/FeaturedProducts";
+import Checkout from "./pages/Checkout";
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -95,6 +96,16 @@ function AppContent() {
               setCart={setCart}
               wishlist={wishlist}
               setWishlist={setWishlist}
+            />
+          }
+        />
+
+        <Route
+          path="/checkout"
+          element={
+            <Checkout
+              cart={cart}
+              setCart={setCart}
             />
           }
         />
