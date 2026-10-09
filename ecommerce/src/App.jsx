@@ -34,7 +34,6 @@ import AdminProductForm from "./pages/admin/AdminProductForm";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminUsers from "./pages/admin/AdminUsers";
 import OrderDetails from "./pages/admin/OrderDetails";
-import AdminSetup from "./pages/AdminSetup";
 import AdminLogin from "./pages/AdminLogin";
 import AdminRoute from "./components/AdminRoute";
 
@@ -129,7 +128,6 @@ function AppContent() {
 
           <Route path="/signin" element={<SignIn />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/temporary-admin-setup" element={<AdminSetup />} />
 
           {/* CUSTOMER ACCOUNT */}
 
