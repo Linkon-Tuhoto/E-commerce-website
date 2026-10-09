@@ -7,8 +7,8 @@ import {
   ShoppingCart,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
-
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -19,18 +19,14 @@ function Navbar({ cart = [] }) {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
 
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
+  const closeMenu = () => setIsMenuOpen(false);
 
   const getStoredCartCount = () => {
     try {
       const storedCart = localStorage.getItem("mamboga_cart");
-
       if (!storedCart) return 0;
 
       const parsedCart = JSON.parse(storedCart);
-
       if (!Array.isArray(parsedCart)) return 0;
 
       return parsedCart.reduce(
@@ -46,7 +42,6 @@ function Navbar({ cart = [] }) {
   useEffect(() => {
     const updateCartCount = () => {
       const storedCount = getStoredCartCount();
-
       const propCount = Array.isArray(cart)
         ? cart.reduce(
             (total, item) => total + Number(item.quantity || 0),
@@ -60,14 +55,10 @@ function Navbar({ cart = [] }) {
     updateCartCount();
 
     const handleStorageChange = (event) => {
-      if (event.key === "mamboga_cart") {
-        updateCartCount();
-      }
+      if (event.key === "mamboga_cart") updateCartCount();
     };
 
-    const handleCartUpdated = () => {
-      updateCartCount();
-    };
+    const handleCartUpdated = () => updateCartCount();
 
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("cartUpdated", handleCartUpdated);
@@ -85,9 +76,7 @@ function Navbar({ cart = [] }) {
 
     window.addEventListener("focus", checkCart);
 
-    return () => {
-      window.removeEventListener("focus", checkCart);
-    };
+    return () => window.removeEventListener("focus", checkCart);
   }, []);
 
   const handleAccountClick = () => {
@@ -96,9 +85,21 @@ function Navbar({ cart = [] }) {
   };
 
   const handleLogout = () => {
+    // AuthContext logout should remove saved tokens and user data.
     logout();
     closeMenu();
-    navigate("/");
+    navigate("/", { replace: true });
+  };
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const query = String(formData.get("search") || "").trim();
+
+    closeMenu();
+    navigate(
+      query ? `/shop?search=${encodeURIComponent(query)}` : "/shop"
+    );
   };
 
   return (
@@ -107,7 +108,6 @@ function Navbar({ cart = [] }) {
       <div className="hidden bg-[#171717] text-xs text-white sm:block">
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-2 sm:px-6">
           <p>Free delivery in Nairobi on orders over KSh 5,000</p>
-
           <div className="flex items-center gap-6">
             <span>Need help?</span>
             <span>0712 345 678</span>
@@ -124,81 +124,70 @@ function Navbar({ cart = [] }) {
               <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#D4AF37]">
                 <span className="text-lg font-bold">M</span>
               </div>
-
               <span className="text-lg font-bold tracking-[0.15em] sm:text-xl">
                 MAMBOGA
               </span>
             </Link>
 
             {/* DESKTOP SEARCH */}
-            <div className="hidden flex-1 md:flex">
+            <form
+              onSubmit={handleSearch}
+              className="hidden flex-1 md:flex"
+            >
               <div className="flex w-full">
                 <div className="relative flex-1">
                   <Search
                     size={18}
                     className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
                   />
-
                   <input
-                    type="text"
+                    name="search"
+                    type="search"
                     placeholder="Search products, categories and brands"
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        const query = event.currentTarget.value.trim();
-
-                        navigate(
-                          query
-                            ? `/shop?search=${encodeURIComponent(query)}`
-                            : "/shop"
-                        );
-                      }
-                    }}
                     className="h-11 w-full rounded-l-md border border-gray-300 py-2 pl-11 pr-4 text-sm outline-none focus:border-[#D4AF37]"
                   />
                 </div>
-
                 <button
-                  type="button"
-                  onClick={() => {
-                    const input = document.querySelector(
-                      'input[placeholder="Search products, categories and brands"]'
-                    );
-
-                    const query = input?.value?.trim();
-
-                    navigate(
-                      query
-                        ? `/shop?search=${encodeURIComponent(query)}`
-                        : "/shop"
-                    );
-                  }}
+                  type="submit"
                   className="h-11 rounded-r-md bg-[#D4AF37] px-7 text-sm font-semibold transition hover:bg-[#c19d25]"
                 >
                   Search
                 </button>
               </div>
+            </form>
+
+            {/* DESKTOP ACCOUNT AND LOGOUT */}
+            <div className="hidden shrink-0 items-center gap-3 md:flex">
+              <button
+                type="button"
+                onClick={handleAccountClick}
+                className="flex items-center gap-2 text-left"
+              >
+                <User size={21} />
+                <div className="max-w-[130px]">
+                  <p className="truncate text-sm font-semibold">
+                    {isAuthenticated
+                      ? user?.name || "My Account"
+                      : "Account"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {isAuthenticated ? "View account" : "Sign in"}
+                  </p>
+                </div>
+              </button>
+
+              {isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 text-sm font-medium text-red-600 transition hover:text-red-800"
+                  title="Log out of your account"
+                >
+                  <LogOut size={17} />
+                  Logout
+                </button>
+              )}
             </div>
-
-            {/* DESKTOP ACCOUNT */}
-            <button
-              type="button"
-              onClick={handleAccountClick}
-              className="hidden shrink-0 cursor-pointer items-center gap-2 text-left md:flex"
-            >
-              <User size={21} />
-
-              <div className="max-w-[130px]">
-                <p className="truncate text-sm font-semibold">
-                  {isAuthenticated
-                    ? user?.name || "My Account"
-                    : "Account"}
-                </p>
-
-                <p className="text-xs text-gray-500">
-                  {isAuthenticated ? "View orders" : "Sign in"}
-                </p>
-              </div>
-            </button>
 
             {/* DESKTOP WISHLIST */}
             <button
@@ -220,7 +209,6 @@ function Navbar({ cart = [] }) {
               className="hidden shrink-0 cursor-pointer items-center gap-2 text-left md:flex"
             >
               <ShoppingCart size={22} />
-
               <div>
                 <p className="text-sm font-semibold">Cart</p>
                 <p className="text-xs text-gray-500">
@@ -239,7 +227,6 @@ function Navbar({ cart = [] }) {
                 aria-label="Open cart"
               >
                 <ShoppingCart size={23} />
-
                 {localCartCount > 0 && (
                   <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D4AF37] px-1 text-[9px] font-bold">
                     {localCartCount}
@@ -259,28 +246,13 @@ function Navbar({ cart = [] }) {
           </div>
 
           {/* MOBILE SEARCH */}
-          <div className="pb-4 md:hidden">
-            <form
-              className="flex w-full"
-              onSubmit={(event) => {
-                event.preventDefault();
-
-                const formData = new FormData(event.currentTarget);
-                const query = String(formData.get("search") || "").trim();
-
-                navigate(
-                  query
-                    ? `/shop?search=${encodeURIComponent(query)}`
-                    : "/shop"
-                );
-              }}
-            >
+          <form onSubmit={handleSearch} className="pb-4 md:hidden">
+            <div className="flex w-full">
               <div className="relative flex-1">
                 <Search
                   size={17}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                 />
-
                 <input
                   name="search"
                   type="search"
@@ -288,15 +260,14 @@ function Navbar({ cart = [] }) {
                   className="h-10 w-full rounded-l-md border border-gray-300 pl-9 pr-3 text-sm outline-none focus:border-[#D4AF37]"
                 />
               </div>
-
               <button
                 type="submit"
                 className="h-10 rounded-r-md bg-[#D4AF37] px-5 text-sm font-semibold hover:bg-[#c19d25]"
               >
                 Search
               </button>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -311,42 +282,21 @@ function Navbar({ cart = [] }) {
               <Menu size={18} />
               All Categories
             </Link>
-
-            <Link
-              to="/shop?category=Clothing"
-              className="transition hover:text-[#a47f12]"
-            >
+            <Link to="/shop?category=Clothing" className="transition hover:text-[#a47f12]">
               Clothing
             </Link>
-
-            <Link
-              to="/shop?category=Shoes"
-              className="transition hover:text-[#a47f12]"
-            >
+            <Link to="/shop?category=Shoes" className="transition hover:text-[#a47f12]">
               Shoes
             </Link>
-
-            <Link
-              to="/shop?category=Kitchen"
-              className="transition hover:text-[#a47f12]"
-            >
+            <Link to="/shop?category=Kitchen" className="transition hover:text-[#a47f12]">
               Kitchen
             </Link>
-
-            <Link
-              to="/shop?category=Household"
-              className="transition hover:text-[#a47f12]"
-            >
+            <Link to="/shop?category=Household" className="transition hover:text-[#a47f12]">
               Household
             </Link>
-
-            <Link
-              to="/shop?newArrival=true"
-              className="transition hover:text-[#a47f12]"
-            >
+            <Link to="/shop?newArrival=true" className="transition hover:text-[#a47f12]">
               New Arrivals
             </Link>
-
             <Link
               to="/shop?featured=true"
               className="ml-auto font-semibold text-[#a47f12] transition hover:text-[#80620b]"
@@ -386,12 +336,10 @@ function Navbar({ cart = [] }) {
               <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#D4AF37]">
                 <span className="text-lg font-bold">M</span>
               </div>
-
               <span className="text-lg font-bold tracking-[0.15em]">
                 MAMBOGA
               </span>
             </Link>
-
             <button
               type="button"
               onClick={closeMenu}
@@ -403,30 +351,24 @@ function Navbar({ cart = [] }) {
           </div>
         </div>
 
-        {/* MENU LINKS */}
+        {/* MOBILE MENU LINKS */}
         <nav className="flex flex-col px-4 py-3">
-          {/* ACCOUNT */}
           <button
             type="button"
             onClick={handleAccountClick}
             className="flex items-center gap-3 border-b border-[#e5dfcf] py-4 text-left font-medium transition hover:text-[#b08d1f]"
           >
             <User size={20} />
-
             <div className="min-w-0">
-              <p className="font-semibold">
-                {isAuthenticated
-                  ? user?.name || "My Account"
-                  : "Account"}
+              <p className="truncate font-semibold">
+                {isAuthenticated ? user?.name || "My Account" : "Account"}
               </p>
-
               <p className="text-xs text-gray-500">
                 {isAuthenticated ? "View orders and account" : "Sign in"}
               </p>
             </div>
           </button>
 
-          {/* CUSTOMER ACCOUNT LINKS */}
           {isAuthenticated && (
             <>
               <Link
@@ -436,7 +378,6 @@ function Navbar({ cart = [] }) {
               >
                 My Account
               </Link>
-
               <Link
                 to="/account/orders"
                 onClick={closeMenu}
@@ -444,18 +385,17 @@ function Navbar({ cart = [] }) {
               >
                 My Orders
               </Link>
-
               <button
                 type="button"
                 onClick={handleLogout}
-                className="border-b border-[#e5dfcf] py-3 text-left font-medium text-red-700 transition hover:text-red-900"
+                className="flex items-center gap-3 border-b border-[#e5dfcf] py-4 text-left font-medium text-red-700 transition hover:text-red-900"
               >
-                Sign Out
+                <LogOut size={19} />
+                Logout
               </button>
             </>
           )}
 
-          {/* WISHLIST */}
           <button
             type="button"
             onClick={() => {
@@ -465,14 +405,12 @@ function Navbar({ cart = [] }) {
             className="flex items-center gap-3 border-b border-[#e5dfcf] py-4 text-left font-medium transition hover:text-[#b08d1f]"
           >
             <Heart size={20} />
-
             <div>
               <p className="font-semibold">Wish List</p>
               <p className="text-xs text-gray-500">Your saved products</p>
             </div>
           </button>
 
-          {/* CART */}
           <button
             type="button"
             onClick={() => {
@@ -483,16 +421,13 @@ function Navbar({ cart = [] }) {
           >
             <span className="flex items-center gap-3">
               <ShoppingCart size={20} />
-
               <span>
                 <span className="block font-semibold">Cart</span>
                 <span className="block text-xs text-gray-500">
-                  {localCartCount}{" "}
-                  {localCartCount === 1 ? "item" : "items"}
+                  {localCartCount} {localCartCount === 1 ? "item" : "items"}
                 </span>
               </span>
             </span>
-
             {localCartCount > 0 && (
               <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#D4AF37] px-2 text-xs font-bold">
                 {localCartCount}
@@ -500,7 +435,6 @@ function Navbar({ cart = [] }) {
             )}
           </button>
 
-          {/* CATEGORIES */}
           <Link
             to="/shop"
             onClick={closeMenu}
@@ -517,7 +451,6 @@ function Navbar({ cart = [] }) {
           >
             Clothing
           </Link>
-
           <Link
             to="/shop?category=Shoes"
             onClick={closeMenu}
@@ -525,7 +458,6 @@ function Navbar({ cart = [] }) {
           >
             Shoes
           </Link>
-
           <Link
             to="/shop?category=Kitchen"
             onClick={closeMenu}
@@ -533,7 +465,6 @@ function Navbar({ cart = [] }) {
           >
             Kitchen
           </Link>
-
           <Link
             to="/shop?category=Household"
             onClick={closeMenu}
@@ -541,7 +472,6 @@ function Navbar({ cart = [] }) {
           >
             Household
           </Link>
-
           <Link
             to="/shop?newArrival=true"
             onClick={closeMenu}
@@ -549,7 +479,6 @@ function Navbar({ cart = [] }) {
           >
             New Arrivals
           </Link>
-
           <Link
             to="/shop?featured=true"
             onClick={closeMenu}

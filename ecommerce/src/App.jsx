@@ -161,7 +161,7 @@ function AppContent() {
           />
 
           {/* ADMIN */}
-          <Route path="/admin" element={<AdminRoute/>}>
+          <Route element={<AdminRoute/>}>
 
           <Route path="/admin" element={<AdminLayout />}>
             <Route

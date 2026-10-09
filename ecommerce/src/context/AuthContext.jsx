@@ -36,14 +36,17 @@ export const AuthProvider = ({ children }) => {
 
     return data;
   };
-
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
 
-    setToken(null);
-    setUser(null);
-  };
+  // Remove legacy authentication keys if used
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("authUser");
+
+  setUser(null);
+  setIsAuthenticated(false);
+};
 
   return (
     <AuthContext.Provider
