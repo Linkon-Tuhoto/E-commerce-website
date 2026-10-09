@@ -35,6 +35,8 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminUsers from "./pages/admin/AdminUsers";
 import OrderDetails from "./pages/admin/OrderDetails";
 import AdminSetup from "./pages/AdminSetup";
+import AdminLogin from "./pages/AdminLogin";
+import AdminRoute from "./components/AdminRoute";
 
 function CustomerRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -91,6 +93,13 @@ function AppContent() {
               <ProductDetails cart={cart} setCart={setCart} />
             }
           />
+          {/*Admin Login*/}
+          <Route 
+          path="/admin/login"
+          element={
+            <AdminLogin />
+          }
+          />
 
           <Route
             path="/cart"
@@ -120,6 +129,7 @@ function AppContent() {
 
           <Route path="/signin" element={<SignIn />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/temporary-admin-setup" element={<AdminSetup />} />
 
           {/* CUSTOMER ACCOUNT */}
 
@@ -151,6 +161,7 @@ function AppContent() {
           />
 
           {/* ADMIN */}
+          <Route path="/admin" element={<AdminRoute/>}>
 
           <Route path="/admin" element={<AdminLayout />}>
             <Route
@@ -176,7 +187,7 @@ function AppContent() {
             <Route path="orders" element={<AdminOrders />} />
             <Route path="orders/:id" element={<OrderDetails />} />
             <Route path="users" element={<AdminUsers />} />
-            <Route path="/temporary-admin-setup" element={<AdminSetup />} />
+          </Route>
           </Route>
 
           {/* UNKNOWN URL */}
