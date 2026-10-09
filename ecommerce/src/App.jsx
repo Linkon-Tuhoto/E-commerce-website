@@ -1,4 +1,12 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+
 import { useEffect, useState } from "react";
 
 import Home from "./pages/Home";
@@ -13,8 +21,11 @@ import Register from "./pages/Register";
 import FeaturedProducts from "./pages/FeaturedProducts";
 import Checkout from "./pages/Checkout";
 
-import { AuthProvider } from "./context/AuthContext";
+import Account from "./pages/Account";
+import MyOrders from "./pages/MyOrders";
+import CustomerOrderDetails from "./pages/CustomerOrderDetails";
 
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { getCart, saveCart } from "./services/cartService";
 
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -23,19 +34,35 @@ import AdminProductForm from "./pages/admin/AdminProductForm";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminUsers from "./pages/admin/AdminUsers";
 import OrderDetails from "./pages/admin/OrderDetails";
+import AdminSetup from "./pages/AdminSetup";
 
+function CustomerRoute({ children }) {
+  const { isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to="/signin"
+        replace
+        state={{
+          from: location.pathname,
+          message: "Please sign in to access your account and orders.",
+        }}
+      />
+    );
+  }
+
+  return children;
+}
 
 function AppContent() {
-  // Load cart from localStorage when the application starts
   const [cart, setCart] = useState(() => getCart());
-
   const [wishlist, setWishlist] = useState([]);
 
   const location = useLocation();
-
   const isAdminPage = location.pathname.startsWith("/admin");
 
-  // Keep localStorage synchronized with React cart state
   useEffect(() => {
     saveCart(cart);
   }, [cart]);
@@ -45,152 +72,123 @@ function AppContent() {
       {!isAdminPage && <Navbar cart={cart} />}
 
       <main className={!isAdminPage ? "pt-[145px]" : ""}>
-
-      <Routes>
-
-        {/* ================= CUSTOMER ROUTES ================= */}
-
-        <Route
-          path="/"
-          element={
-            <Home
-              cart={cart}
-              setCart={setCart}
-            />
-          }
-        />
-
-        <Route
-          path="/shop"
-          element={
-            <Shop
-              cart={cart}
-              setCart={setCart}
-            />
-          }
-        />
-
-        <Route
-          path="/product/:id"
-          element={
-            <ProductDetails
-              cart={cart}
-              setCart={setCart}
-            />
-          }
-        />
-
-        <Route
-          path="/cart"
-          element={
-            <Cart
-              cart={cart}
-              setCart={setCart}
-            />
-          }
-        />
-
-        <Route
-          path="/wishlist"
-          element={
-            <Wishlist
-              setCart={setCart}
-              wishlist={wishlist}
-              setWishlist={setWishlist}
-            />
-          }
-        />
-
-        <Route
-          path="/checkout"
-          element={
-            <Checkout
-              cart={cart}
-              setCart={setCart}
-            />
-          }
-        />
-
-        <Route
-          path="/featured-products"
-          element={
-            <FeaturedProducts
-              cart={cart}
-              setCart={setCart}
-            />
-          }
-        />
-
-        <Route
-          path="/signin"
-          element={<SignIn />}
-        />
-
-        <Route
-          path="/register"
-          element={<Register />}
-        />
-
-
-        {/* ================= ADMIN ROUTES ================= */}
-
-        <Route path="/admin" element={<AdminLayout />}>
+        <Routes>
+          {/* CUSTOMER SHOP */}
 
           <Route
-            index
-            element={
-              <div>
-                <h1 className="text-2xl font-bold mb-4">
-                  Admin Dashboard
-                </h1>
+            path="/"
+            element={<Home cart={cart} setCart={setCart} />}
+          />
 
-                <p className="text-gray-600">
-                  Welcome to store admin
-                </p>
-              </div>
+          <Route
+            path="/shop"
+            element={<Shop cart={cart} setCart={setCart} />}
+          />
+
+          <Route
+            path="/product/:id"
+            element={
+              <ProductDetails cart={cart} setCart={setCart} />
             }
           />
 
           <Route
-            path="products"
-            element={<AdminProducts />}
+            path="/cart"
+            element={<Cart cart={cart} setCart={setCart} />}
           />
 
           <Route
-            path="products/new"
-            element={<AdminProductForm />}
+            path="/wishlist"
+            element={
+              <Wishlist
+                setCart={setCart}
+                wishlist={wishlist}
+                setWishlist={setWishlist}
+              />
+            }
           />
 
           <Route
-            path="products/edit/:id"
-            element={<AdminProductForm />}
+            path="/checkout"
+            element={<Checkout cart={cart} setCart={setCart} />}
           />
 
           <Route
-            path="orders"
-            element={<AdminOrders />}
+            path="/featured-products"
+            element={<FeaturedProducts cart={cart} setCart={setCart} />}
+          />
+
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* CUSTOMER ACCOUNT */}
+
+          <Route
+            path="/account"
+            element={
+              <CustomerRoute>
+                <Account />
+              </CustomerRoute>
+            }
           />
 
           <Route
-            path="users"
-            element={<AdminUsers />}
+            path="/account/orders"
+            element={
+              <CustomerRoute>
+                <MyOrders />
+              </CustomerRoute>
+            }
           />
 
-        <Route
-        path="orders/:id"
-        element={<OrderDetails />}
-        />
+          <Route
+            path="/account/orders/:id"
+            element={
+              <CustomerRoute>
+                <CustomerOrderDetails />
+              </CustomerRoute>
+            }
+          />
 
-        </Route>
+          {/* ADMIN */}
 
-      </Routes>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route
+              index
+              element={
+                <div>
+                  <h1 className="mb-4 text-2xl font-bold">
+                    Admin Dashboard
+                  </h1>
+                  <p className="text-gray-600">
+                    Welcome to store admin
+                  </p>
+                </div>
+              }
+            />
+
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="products/new" element={<AdminProductForm />} />
+            <Route
+              path="products/edit/:id"
+              element={<AdminProductForm />}
+            />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="orders/:id" element={<OrderDetails />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="/temporary-admin-setup" element={<AdminSetup />} />
+          </Route>
+
+          {/* UNKNOWN URL */}
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
       {!isAdminPage && <Footer />}
     </>
   );
 }
-
 
 function App() {
   return (
