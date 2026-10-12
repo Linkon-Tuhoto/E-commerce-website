@@ -11,22 +11,22 @@ function Categories() {
     {
       name: "Clothing",
       description: "Men, women & kids",
-      image: clothingImage,
+      image: "https://www.image2url.com/r2/default/images/1791807996713-4fd51be4-2ebb-41a0-9b76-bd947c7261ee.png",
     },
     {
       name: "Shoes",
       description: "Every step, elevated",
-      image: shoesImage,
+      image: "https://www.image2url.com/r2/default/images/1791807923893-01595448-c63e-48a0-b6d9-ceb78f1ed264.png",
     },
     {
       name: "Kitchen",
       description: "Cook beautifully",
-      image: kitchenImage,
+      image: "https://www.image2url.com/r2/default/images/1791807817882-e8ccdd1c-dca8-44ae-9399-d1155f73c651.png",
     },
     {
       name: "Household",
       description: "Make home feel good",
-      image: householdImage,
+      image: "https://www.image2url.com/r2/default/images/1791807466288-891346c3-4d3c-4854-8702-48e540c00fa4.png",
     },
   ];
 
@@ -47,7 +47,7 @@ function Categories() {
 
           <Link
             to="/shop"
-            className="hidden sm:flex items-center gap-1 text-sm"
+            className="flex items-center gap-1 text-sm"
           >
             View all
             <ArrowRight size={16} />

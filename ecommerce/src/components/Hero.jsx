@@ -166,7 +166,7 @@ function Hero() {
           >
 
             <img
-              src={heroimg}
+              src="https://www.image2url.com/r2/default/images/1791807313038-423009c0-9e6e-463e-a2a0-d377e9f35668.png"
               alt="Featured collection"
               className="
                 absolute

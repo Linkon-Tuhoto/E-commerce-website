@@ -84,7 +84,6 @@ function Filters({
             </span>
 
             <span className="text-xs text-gray-400">
-              {products.length}
             </span>
           </label>
 
@@ -120,7 +119,6 @@ function Filters({
                 </span>
 
                 <span className="text-xs text-gray-400">
-                  {count}
                 </span>
               </label>
             );

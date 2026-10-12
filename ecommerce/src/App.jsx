@@ -20,6 +20,7 @@ import SignIn from "./pages/SignIn";
 import Register from "./pages/Register";
 import FeaturedProducts from "./pages/FeaturedProducts";
 import Checkout from "./pages/Checkout";
+import ScrollToTop from "./components/ScrollToTop";
 
 import Account from "./pages/Account";
 import MyOrders from "./pages/MyOrders";
@@ -203,6 +204,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ScrollToTop />
         <AppContent />
       </AuthProvider>
     </BrowserRouter>

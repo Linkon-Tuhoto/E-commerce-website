@@ -72,7 +72,7 @@ function PromoBanner() {
           <div className="w-full h-[260px] md:h-full overflow-hidden">
 
             <img
-              src={householdImage}
+              src="https://www.image2url.com/r2/default/images/1791807466288-891346c3-4d3c-4854-8702-48e540c00fa4.png"
               alt="Home and household products"
               className="
                 w-full
