@@ -1,108 +1,66 @@
+
 import API_URL from "./api";
 
 const WISHLIST_URL = `${API_URL}/api/wishlist`;
 
-const getToken = () => {
-  return (
-    localStorage.getItem("token") ||
-    localStorage.getItem("authToken")
-  );
-};
+const getToken = () =>
+  localStorage.getItem("token") ||
+  localStorage.getItem("authToken") ||
+  localStorage.getItem("surveyToken");
 
-// GET MY WISHLIST
-export const getMyWishlist = async () => {
+const request = async (url, options = {}) => {
   const token = getToken();
 
-  const response = await fetch(WISHLIST_URL, {
+  if (!token) {
+    throw new Error("Please sign in to use your wishlist.");
+  }
+
+  const response = await fetch(url, {
+    ...options,
     headers: {
       Authorization: `Bearer ${token}`,
+      ...(options.body
+        ? { "Content-Type": "application/json" }
+        : {}),
+      ...options.headers,
     },
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+  const data = await response.json().catch(() => ({}));
 
+  if (!response.ok) {
     throw new Error(
-      errorData.message || "Failed to fetch wishlist"
+      data.message || `Wishlist request failed (${response.status}).`
     );
   }
 
-  return response.json();
+  return data;
 };
 
-// ADD PRODUCT
-export const addToWishlist = async (productId) => {
-  const token = getToken();
+export const getMyWishlist = () =>
+  request(WISHLIST_URL);
 
-  const response = await fetch(WISHLIST_URL, {
+export const addToWishlist = (productId) => {
+  if (!productId) {
+    throw new Error("Product ID is missing.");
+  }
+
+  return request(WISHLIST_URL, {
     method: "POST",
-
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-
-    body: JSON.stringify({
-      productId,
-    }),
+    body: JSON.stringify({ productId }),
   });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    throw new Error(
-      errorData.message || "Failed to add to wishlist"
-    );
-  }
-
-  return response.json();
 };
 
-// REMOVE PRODUCT
-export const removeFromWishlist = async (productId) => {
-  const token = getToken();
+export const removeFromWishlist = (productId) => {
+  if (!productId) {
+    throw new Error("Product ID is missing.");
+  }
 
-  const response = await fetch(
-    `${WISHLIST_URL}/${productId}`,
-    {
-      method: "DELETE",
-
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+  return request(
+    `${WISHLIST_URL}/${encodeURIComponent(productId)}`,
+    { method: "DELETE" }
   );
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    throw new Error(
-      errorData.message || "Failed to remove from wishlist"
-    );
-  }
-
-  return response.json();
 };
 
-// CLEAR WISHLIST
-export const clearWishlist = async () => {
-  const token = getToken();
-
-  const response = await fetch(WISHLIST_URL, {
-    method: "DELETE",
-
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    throw new Error(
-      errorData.message || "Failed to clear wishlist"
-    );
-  }
-
-  return response.json();
-};
+export const clearWishlist = () =>
+  request(WISHLIST_URL, { method: "DELETE" });

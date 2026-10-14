@@ -35,8 +35,42 @@ import {
 const getToken = () => {
   return (
     localStorage.getItem("token") ||
-    localStorage.getItem("authToken")
+    localStorage.getItem("authToken") ||
+    localStorage.getItem("surveyToken")
   );
+};
+
+// Wishlist APIs may return products in a few different shapes.
+// Normalize every entry to a string product ID.
+const normalizeWishlistIds = (data) => {
+  const entries = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.products)
+    ? data.products
+    : Array.isArray(data?.wishlist?.products)
+    ? data.wishlist.products
+    : Array.isArray(data?.wishlist?.items)
+    ? data.wishlist.items
+    : Array.isArray(data?.items)
+    ? data.items
+    : Array.isArray(data?.wishlist)
+    ? data.wishlist
+    : [];
+
+  return [...new Set(
+    entries
+      .map((entry) => {
+        const product = entry?.product || entry;
+        const id =
+          product?._id ||
+          product?.id ||
+          entry?.productId?._id ||
+          entry?.productId ||
+          entry?.product_id;
+        return id ? String(id) : null;
+      })
+      .filter(Boolean)
+  )];
 };
 
 // ======================================================
@@ -119,6 +153,7 @@ function Filters({
                 </span>
 
                 <span className="text-xs text-gray-400">
+                  {count}
                 </span>
               </label>
             );
@@ -210,8 +245,13 @@ function ProductCard({
       product?.stockQuantity > 0
     );
 
-  const isWishlisted =
-    wishlistIds.includes(product._id);
+  const productId = String(
+    product?._id || product?.id || ""
+  );
+
+  const isWishlisted = wishlistIds.some(
+    (id) => String(id) === productId
+  );
 
   // ==================================================
   // COLOR CHANGE
@@ -356,48 +396,34 @@ function ProductCard({
     event.preventDefault();
     event.stopPropagation();
 
-    if (wishlistLoading) {
+    if (wishlistLoading) return;
+
+    if (!productId) {
+      alert("This product has no valid ID.");
       return;
     }
 
-    if (!requireLogin()) {
-      return;
-    }
+    if (!requireLogin()) return;
 
     try {
       setWishlistLoading(true);
 
       if (isWishlisted) {
-        await removeFromWishlist(
-          product._id
-        );
-
+        await removeFromWishlist(productId);
         setWishlistIds((current) =>
-          current.filter(
-            (id) =>
-              id !== product._id
-          )
+          current.filter((id) => String(id) !== productId)
         );
       } else {
-        await addToWishlist(
-          product._id
+        await addToWishlist(productId);
+        setWishlistIds((current) =>
+          current.some((id) => String(id) === productId)
+            ? current
+            : [...current, productId]
         );
-
-        setWishlistIds((current) => [
-          ...current,
-          product._id,
-        ]);
       }
     } catch (error) {
-      console.error(
-        "Wishlist error:",
-        error
-      );
-
-      alert(
-        error.message ||
-          "Failed to update wishlist."
-      );
+      console.error("Wishlist error:", error);
+      alert(error.message || "Failed to update wishlist.");
     } finally {
       setWishlistLoading(false);
     }
@@ -918,34 +944,29 @@ function Shop({
   // ==================================================
 
   useEffect(() => {
-    const fetchWishlist = async () => {
-      const token = getToken();
+    let cancelled = false;
 
-      if (!token) {
+    const fetchWishlist = async () => {
+      if (!getToken()) {
         setWishlistIds([]);
         return;
       }
 
       try {
-        const data =
-          await getMyWishlist();
-
-        const ids =
-          (data?.products || []).map(
-            (product) =>
-              product._id
-          );
-
-        setWishlistIds(ids);
+        const data = await getMyWishlist();
+        if (!cancelled) {
+          setWishlistIds(normalizeWishlistIds(data));
+        }
       } catch (error) {
-        console.error(
-          "Failed to load wishlist:",
-          error
-        );
+        console.error("Failed to load wishlist:", error);
+        if (!cancelled) setWishlistIds([]);
       }
     };
 
     fetchWishlist();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ==================================================
